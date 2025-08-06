@@ -1,56 +1,105 @@
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/user.model.js'; // .js uzantısı ESM modüllerinde gereklidir
+import jwt from 'jsonwebtoken';
+import User, { IUser } from '../models/user.model.js';
 import AppError from '../utils/appError.js';
 
-// A simple utility to wrap async functions for error handling
+// Extend Express Request type to include the user property
+interface CustomRequest extends Request {
+  user?: IUser;
+}
+
+const signToken = (id: string) => {
+  // CORRECTED: Added '!' to assert that environment variables exist.
+  return jwt.sign({ id }, process.env.JWT_SECRET!, {
+    expiresIn: process.env.JWT_EXPIRES_IN!,
+  });
+};
+
+const createSendToken = (user: IUser, statusCode: number, res: Response) => {
+  // CORRECTED: Converted user._id (ObjectId) to a string before passing.
+  const token = signToken(user._id.toString());
+
+  // Remove password from output
+  user.password = undefined;
+
+  res.status(statusCode).json({
+    status: 'success',
+    token,
+    data: {
+      user,
+    },
+  });
+};
+
 const catchAsync = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, next).catch(next);
   };
 };
 
-export const register = catchAsync(
-  async (req: Request, res: Response, next: NextFunction) => {
+export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { firstName, lastName, email, password } = req.body;
 
-    // 1) Basic validation
     if (!firstName || !lastName || !email || !password) {
       return next(new AppError('Please provide all required fields', 400));
     }
 
-    // 2) Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return next(new AppError('Email already in use', 400));
-    }
-
-    // 3) Create new user
-    // Password will be hashed by the pre-save middleware in the model
     const newUser = await User.create({
       firstName,
       lastName,
       email,
       password,
     });
+    
+    createSendToken(newUser, 201, res);
+});
 
-    // We don't want to send the password back, even if it's hashed.
-    // The 'select: false' in the schema helps, but let's be explicit.
-    newUser.password = undefined;
+export const login = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { email, password } = req.body;
 
-    // TODO: Create and send JWT token as per case study requirements
+    if (!email || !password) {
+      return next(new AppError('Please provide email and password!', 400));
+    }
+    
+    const user = await User.findOne({ email }).select('+password');
 
-    // 4) Send response
-    res.status(201).json({
-      status: 'success',
-      // TODO: Add token here
-      data: {
-        user: newUser,
-      },
-    });
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return next(new AppError('Incorrect email or password', 401));
+    }
+
+    createSendToken(user, 200, res);
+});
+
+export const protect = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+  let token;
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
   }
-);
 
-// We will add login controller here later
-export const login = (req: Request, res: Response) => {
-    res.status(500).json({ status: 'error', message: 'Route not defined yet!'});
-}
+  if (!token) {
+    return next(new AppError('You are not logged in! Please log in to get access.', 401));
+  }
+
+  // CORRECTED: Removed unnecessary and incorrect 'promisify' wrapper.
+  const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+
+  const currentUser = await User.findById(decoded.id);
+  if (!currentUser) {
+    return next(new AppError('The user belonging to this token does no longer exist.', 401));
+  }
+  
+  req.user = currentUser;
+  next();
+});
+
+export const restrictTo = (...roles: string[]) => {
+  return (req: CustomRequest, res: Response, next: NextFunction) => {
+    // roles ['admin', 'lead-guide']. role='user'
+    if (!req.user || !roles.includes(req.user.role)) {
+      return next(
+        new AppError('You do not have permission to perform this action', 403) // 403 Forbidden
+      );
+    }
+    next();
+  };
+};
