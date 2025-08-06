@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Backend Service (Node.js/Express)
+  backend:
+    build: ./backend
+    container_name: ecom-backend
+    ports:
+      - "3001:3001"
+    volumes:
+      # Mount the src folder for hot-reloading
+      - ./backend/src:/app/src
+    environment:
+      # Connection string for MongoDB running in another container
+      - MONGO_URI=mongodb://mongo:27017/e-commerce-db
+      - PORT=3001
+    depends_on:
+      - mongo
+    networks:
+      - ecom-network
+
+  # MongoDB Service
+  mongo:
+    image: mongo:latest
+    container_name: ecom-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      # Persist database data
+      - mongo-data:/data/db
+    networks:
+      - ecom-network
+
+# Define the network
+networks:
+  ecom-network:
+    driver: bridge
+
+# Define the volume for MongoDB data persistence
+volumes:
+  mongo-data:
