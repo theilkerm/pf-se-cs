@@ -14,6 +14,8 @@ export interface IProduct extends mongoose.Document {
     }[];
     tags: string[];
     isFeatured: boolean;
+    averageRating: number;
+    numReviews: number;
 }
 
 const productSchema = new Schema<IProduct>(
@@ -53,6 +55,14 @@ const productSchema = new Schema<IProduct>(
         isFeatured: {
             type: Boolean,
             default: false,
+        },
+        averageRating: {
+            type: Number,
+            default: 0,
+        },
+        numReviews: {
+            type: Number,
+            default: 0,
         },
     },
     {

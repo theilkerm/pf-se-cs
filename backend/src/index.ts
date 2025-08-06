@@ -10,6 +10,7 @@ import categoryRouter from './routes/category.routes.js';
 import productRouter from './routes/product.routes.js';
 import cartRouter from './routes/cart.routes.js';
 import orderRouter from './routes/order.routes.js';
+import reviewRouter from './routes/review.routes.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' }); // Explicitly define path
@@ -31,6 +32,7 @@ app.use('/api/v1/categories', categoryRouter);
 app.use('/api/v1/products', productRouter);
 app.use('/api/v1/cart', cartRouter);
 app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1/reviews', reviewRouter);
 
 // Handle all other undefined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
