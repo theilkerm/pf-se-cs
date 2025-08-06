@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 
 import AppError from './utils/appError.js';
 import authRouter from './routes/auth.routes.js';
+import userRouter from './routes/user.routes.js';
+import categoryRouter from './routes/category.routes.js';
 
 // Load environment variables
 dotenv.config({ path: './.env' }); // Explicitly define path
@@ -20,8 +22,9 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to the E-commerce API!');
 });
 
-// Use the auth router for all routes starting with /api/v1/auth
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', userRouter);
+app.use('/api/v1/categories', categoryRouter);
 
 // Handle all other undefined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
