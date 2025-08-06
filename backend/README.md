@@ -4,16 +4,18 @@ This repository contains the backend source code for a full-featured e-commerce 
 
 ## Features Implemented
 
-- [x] **User Authentication**: JWT-based registration and login system.
+- [x] **User Authentication**: JWT-based registration, login, email verification, and password reset.
 - [x] **Role-Based Access Control**: Differentiated access for `customer` and `admin` roles.
 - [x] **Product Management (Admin)**: Full CRUD operations for products, including image uploads.
 - [x] **Category Management (Admin)**: Full CRUD operations for product categories.
 - [x] **Customer Management (Admin)**: Full CRUD operations for customer accounts.
-- [x] **Shopping Cart**: Persistent, user-specific shopping cart functionality.
+- [x] **Shopping Cart**: Persistent, user-specific shopping cart functionality with stock validation.
 - [x] **Order Processing**: Checkout process to convert a cart into an order, with stock management.
 - [x] **Order History**: Users can view their past orders.
-- [x] **Review System**: Users can review products they have purchased, with admin approval.
+- [x] **Review System**: Users can review products they have purchased, with admin approval and average rating calculation.
 - [x] **Admin Dashboard**: An endpoint to aggregate key statistics (total sales, counts, etc.).
+- [x] **Advanced Security**: Includes rate limiting, input sanitization (XSS, NoSQL Injection).
+- [x] **Schema-Based Validation**: All major input is validated using Zod.
 - [x] **Automated Testing**: Comprehensive integration test suite using Jest and Supertest.
 
 ## Technology Stack
@@ -21,7 +23,10 @@ This repository contains the backend source code for a full-featured e-commerce 
 - **Backend**: Node.js, Express.js, TypeScript
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: JSON Web Tokens (JWT), bcryptjs
+- **Validation**: Zod
+- **Email**: Nodemailer (with Mailtrap for development)
 - **File Uploads**: Multer
+- **Security**: `express-rate-limit`, `express-mongo-sanitize`, `xss-clean`
 - **Testing**: Jest, Supertest
 - **Containerization**: Docker, Docker Compose
 - **Development**: `tsx` for hot-reloading
@@ -35,6 +40,7 @@ Follow these instructions to get the project set up and running on your local ma
 - Node.js (v18 or higher)
 - Docker and Docker Compose
 - An API testing tool like Postman or Insomnia
+- A free [Mailtrap.io](https://mailtrap.io) account for testing email features.
 
 ### Installation & Setup
 
@@ -45,30 +51,40 @@ Follow these instructions to get the project set up and running on your local ma
     ```
 
 2.  **Configure Environment Variables:**
-    Navigate to the `backend` directory. Copy the example environment file and fill in your details.
+    Navigate to the `backend` directory. Copy the example environment file and fill in your details, especially your Mailtrap credentials.
     ```bash
     cd backend
     cp .env.example .env
     ```
-    The default values in `.env.example` are configured to work with the Docker setup and do not need to be changed for local development.
 
     **`.env.example`**
     ```env
+    # Server Port
     PORT=3001
+    
+    # MongoDB Connection
     MONGO_URI=mongodb://mongo:27017/e-commerce-db
+    
+    # JWT Secrets
     JWT_SECRET=this-is-a-super-secret-key-change-it-later
-    JWT_EXPIRES_IN=90d
+    JWT_EXPIPIRES_IN=90d
+    
+    # EMAIL CONFIGURATION (for Mailtrap.io)
+    EMAIL_HOST=
+    EMAIL_PORT=
+    EMAIL_USERNAME=
+    EMAIL_PASSWORD=
+    EMAIL_FROM=
     ```
 
 3.  **Build and Run with Docker Compose:**
-    From the **root project directory** (`pf-se-cs`), run the following command. This will build the Node.js image and start the backend server and the MongoDB database containers.
+    From the **root project directory** (`pf-se-cs`), run the following command.
     ```bash
     docker-compose up --build -d
     ```
-    Your API will now be running and accessible at `http://localhost:3001`.
+    Your API will now be running at `http://localhost:3001`.
 
 4.  **Install Local Dependencies (for IDE support):**
-    To ensure your code editor (like VS Code) recognizes the installed packages for IntelliSense and type-checking, run `npm install` inside the `backend` directory.
     ```bash
     cd backend
     npm install
@@ -76,8 +92,8 @@ Follow these instructions to get the project set up and running on your local ma
 
 ## Running the Application
 
--   **Development Server**: The `docker-compose up` command starts the server in development mode with `tsx` for hot-reloading. Any changes you make in the `src` directory will automatically restart the server.
--   **Automated Tests**: To run the entire test suite, navigate to the `backend` directory and run:
+-   **Development Server**: `docker-compose up` starts the server with hot-reloading.
+-   **Automated Tests**:
     ```bash
     # Run tests once and exit
     npm run test:single
@@ -85,17 +101,6 @@ Follow these instructions to get the project set up and running on your local ma
     # Run tests in interactive watch mode
     npm test
     ```
-
-## Demo Credentials
-
-You can register new users via the API. To create an admin, you can manually update a user's `role` in the database to `"admin"`.
-
--   **Admin User:**
-    -   **Email:** `admin@example.com`
-    -   **Password:** `password123`
--   **Customer User:**
-    -   **Email:** `customer@example.com`
-    -   **Password:** `password123`
 
 ## API Documentation
 
@@ -105,56 +110,72 @@ All endpoints are prefixed with `/api/v1`.
 
 #### **Authentication (`/auth`)**
 
--   **`POST /register`**: Register a new user.
-    -   **Access**: Public
-    -   **Body**: `{ "firstName": "John", "lastName": "Doe", "email": "john@example.com", "password": "password123" }`
+-   **`POST /register`**: Register a new user and send a verification email. (Public)
+-   **`POST /login`**: Log in a user and receive a JWT. (Public)
+-   **`GET /verify-email/:token`**: Verify a user's email. (Public)
+-   **`POST /forgot-password`**: Send a password reset link. (Public)
+-   **`PATCH /reset-password/:token`**: Reset the password with a valid token. (Public)
 
--   **`POST /login`**: Log in a user and receive a JWT.
-    -   **Access**: Public
-    -   **Body**: `{ "email": "john@example.com", "password": "password123" }`
+---
+
+#### **Users (`/users`)**
+
+-   **`GET /me`**: Get the profile of the currently logged-in user. (Private)
+-   **`GET /`**: Get a list of all customers. (Admin)
+-   **`GET /:id`**: Get a single customer's details, including order history. (Admin)
+-   **`PATCH /:id`**: Update a user's details. (Admin)
+-   **`DELETE /:id`**: Delete a user. (Admin)
+
+---
+
+#### **Categories (`/categories`)**
+
+-   **`GET /`**: Get a list of all active categories. (Public)
+-   **`POST /`**: Create a new category. (Admin)
+    -   **Body**: `{ "name": "Electronics", "description": "..." }`
+
+*(Note: Full CRUD for categories can be easily extended by adding GET /:id, PATCH /:id, and DELETE /:id routes for admins.)*
 
 ---
 
 #### **Products (`/products`)**
 
--   **`GET /`**: Get a list of all products.
-    -   **Access**: Public
--   **`GET /:id`**: Get a single product by its ID.
-    -   **Access**: Public
--   **`POST /`**: Create a new product.
-    -   **Access**: Admin
+-   **`GET /`**: Get a list of all products. Supports filtering by category (e.g., `?category=<category_id>`). (Public)
+-   **`GET /:id`**: Get a single product by its ID. (Public)
+-   **`POST /`**: Create a new product with images. (Admin)
     -   **Body**: `form-data` with fields for `name`, `description`, `price`, `stock`, `category` (ID), and `images` (file upload).
+-   **`PATCH /:id`**: Update a product's details. (Admin)
+-   **`DELETE /:id`**: Delete a product and its associated reviews. (Admin)
 
 ---
 
 #### **Cart (`/cart`)**
 
--   **`GET /`**: Get the current user's shopping cart.
-    -   **Access**: Private (Customer)
--   **`POST /`**: Add an item to the cart.
-    -   **Access**: Private (Customer)
+-   **`GET /`**: Get the current user's shopping cart. (Private)
+-   **`POST /`**: Add an item to the cart or update its quantity. (Private)
     -   **Body**: `{ "productId": "...", "quantity": 1 }`
+-   **`DELETE /:productId`**: Remove an item from the cart. (Private)
 
 ---
 
 #### **Orders (`/orders`)**
 
--   **`POST /`**: Create a new order from the user's cart (checkout).
-    -   **Access**: Private (Customer)
+-   **`POST /`**: Create a new order from the user's cart (checkout). (Private)
     -   **Body**: `{ "shippingAddress": { ... } }`
--   **`GET /my-orders`**: Get the logged-in user's order history.
-    -   **Access**: Private (Customer)
-
-*(Other endpoints for Categories, Reviews, Admin User Management, and Dashboard follow similar RESTful patterns.)*
+-   **`GET /my-orders`**: Get the logged-in user's order history. (Private)
 
 ---
 
-## Deployment
+#### **Reviews (`/reviews`)**
 
-To deploy this application to a production environment:
+-   **`POST /`**: Create a new review for a purchased product. (Private)
+    -   **Body**: `{ "productId": "...", "rating": 5, "comment": "..." }`
+-   **`PATCH /:id/approve`**: Approve a pending review. (Admin)
 
-1.  Ensure you have a production-ready server (e.g., AWS EC2, DigitalOcean Droplet) with Docker installed.
-2.  Set up production environment variables in a `.env` file on the server (especially a strong `JWT_SECRET`).
-3.  Build the production Docker image.
-4.  Run the containers using `docker-compose -f docker-compose.prod.yml up -d` (assuming a separate production compose file).
-5.  It's recommended to use a process manager like PM2 inside the container for production to handle restarts and clustering.
+---
+
+#### **Dashboard (`/dashboard`)**
+
+-   **`GET /stats`**: Get aggregated statistics for the admin dashboard. (Admin)
+
+---
