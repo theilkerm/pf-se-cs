@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto'; //
 
 // Using default import method as requested
 const { model, models, Schema } = mongoose;
@@ -137,6 +138,23 @@ userSchema.methods.correctPassword = async function (
 ): Promise<boolean> {
     if (!userPassword) return false;
     return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.createPasswordResetToken = function(): string {
+    // 1) Generate a random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // 2) Hash the token and save it to the database
+    this.passwordResetToken = crypto
+        .createHash('sha256')
+        .update(resetToken)
+        .digest('hex');
+    
+    // Set token to expire in 10 minutes
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+
+    // 3) Return the unhashed token to be sent to the user
+    return resetToken;
 };
 
 // Using the requested pattern to prevent OverwriteModelError
