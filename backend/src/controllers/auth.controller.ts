@@ -53,6 +53,25 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
       password,
     });
     
+    // Generate the verification token
+    const verificationToken = (newUser as any).createEmailVerificationToken();
+    await newUser.save({ validateBeforeSave: false });
+
+    // Send the verification email
+    const verificationURL = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email/${verificationToken}`;
+    const message = `Welcome to the E-commerce Platform! Please verify your email by clicking the following link: ${verificationURL}`;
+
+    try {
+        await sendEmail({
+            email: newUser.email,
+            subject: 'Email Verification',
+            message
+        });
+    } catch (err) {
+        // Handle email sending error if needed, but don't block registration
+        console.error("Email could not be sent:", err);
+    }
+    
     createSendToken(newUser, 201, res);
 });
 
@@ -154,6 +173,30 @@ export const resetPassword = catchAsync(async (req: Request, res: Response, next
 
     // 3) Log the user in, send JWT
     createSendToken(user, 200, res);
+});
+
+export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    // 1) Get user based on the token
+    const hashedToken = crypto
+        .createHash('sha256')
+        .update(req.params.token)
+        .digest('hex');
+
+    const user = await User.findOne({ emailVerificationToken: hashedToken });
+
+    if (!user) {
+        return next(new AppError('Token is invalid or has already been used', 400));
+    }
+
+    // 2) If token is valid, set isEmailVerified to true
+    user.isEmailVerified = true;
+    (user as any).emailVerificationToken = undefined; // Clear the token
+    await user.save();
+
+    res.status(200).json({
+        status: 'success',
+        message: 'Email successfully verified!'
+    });
 });
 
 export const restrictTo = (...roles: string[]) => {

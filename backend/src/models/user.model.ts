@@ -157,6 +157,21 @@ userSchema.methods.createPasswordResetToken = function(): string {
     return resetToken;
 };
 
+
+userSchema.methods.createEmailVerificationToken = function(): string {
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    this.emailVerificationToken = crypto
+        .createHash('sha256')
+        .update(verificationToken)
+        .digest('hex');
+    
+    // You can add an expiry for this token as well if needed
+    // this.emailVerificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    return verificationToken;
+};
+
 // Using the requested pattern to prevent OverwriteModelError
 // and explicitly typing the model to prevent type errors.
 const User: mongoose.Model<IUser> =
