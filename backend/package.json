@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts",
-    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watchAll --runInBand"
+    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watchAll --runInBand",
+    "seed:import": "tsx src/data/seeder.ts --import",
+    "seed:delete": "tsx src/data/seeder.ts --delete"
   },
   "keywords": [],
   "author": "",
@@ -28,6 +30,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/dotenv": "^6.1.1",
