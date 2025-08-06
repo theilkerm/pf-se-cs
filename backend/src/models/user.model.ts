@@ -25,6 +25,11 @@ export interface IUser extends mongoose.Document {
     emailVerificationToken?: string;
     passwordResetToken?: string;
     passwordResetExpires?: Date;
+    cart: {
+        product: mongoose.Types.ObjectId;
+        quantity: number;
+        price: number; // Price at the time of adding to cart
+    }[];
     correctPassword(candidatePassword: string, userPassword?: string): Promise<boolean>;
 }
 
@@ -79,6 +84,24 @@ const userSchema = new Schema<IUser>(
         emailVerificationToken: String,
         passwordResetToken: String,
         passwordResetExpires: Date,
+        cart: [
+            {
+                product: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Product',
+                },
+                quantity: {
+                    type: Number,
+                    required: true,
+                    min: 1,
+                    default: 1
+                },
+                price: {
+                    type: Number,
+                    required: true,
+                }
+            }
+        ]
     },
     {
         timestamps: true, // Adds createdAt and updatedAt timestamps
