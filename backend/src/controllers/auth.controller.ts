@@ -40,55 +40,51 @@ const catchAsync = (fn: Function) => {
 };
 
 export const register = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
-      return next(new AppError('Please provide all required fields', 400));
-    }
+  const newUser = await User.create({
+    firstName,
+    lastName,
+    email,
+    password,
+  });
 
-    const newUser = await User.create({
-      firstName,
-      lastName,
-      email,
-      password,
+  // Generate the verification token
+  const verificationToken = (newUser as any).createEmailVerificationToken();
+  await newUser.save({ validateBeforeSave: false });
+
+  // Send the verification email
+  const verificationURL = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email/${verificationToken}`;
+  const message = `Welcome to the E-commerce Platform! Please verify your email by clicking the following link: ${verificationURL}`;
+
+  try {
+    await sendEmail({
+      email: newUser.email,
+      subject: 'Email Verification',
+      message
     });
-    
-    // Generate the verification token
-    const verificationToken = (newUser as any).createEmailVerificationToken();
-    await newUser.save({ validateBeforeSave: false });
+  } catch (err) {
+    // Handle email sending error if needed, but don't block registration
+    console.error("Email could not be sent:", err);
+  }
 
-    // Send the verification email
-    const verificationURL = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email/${verificationToken}`;
-    const message = `Welcome to the E-commerce Platform! Please verify your email by clicking the following link: ${verificationURL}`;
-
-    try {
-        await sendEmail({
-            email: newUser.email,
-            subject: 'Email Verification',
-            message
-        });
-    } catch (err) {
-        // Handle email sending error if needed, but don't block registration
-        console.error("Email could not be sent:", err);
-    }
-    
-    createSendToken(newUser, 201, res);
+  createSendToken(newUser, 201, res);
 });
 
 export const login = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      return next(new AppError('Please provide email and password!', 400));
-    }
-    
-    const user = await User.findOne({ email }).select('+password');
+  if (!email || !password) {
+    return next(new AppError('Please provide email and password!', 400));
+  }
 
-    if (!user || !(await user.correctPassword(password, user.password))) {
-      return next(new AppError('Incorrect email or password', 401));
-    }
+  const user = await User.findOne({ email }).select('+password');
 
-    createSendToken(user, 200, res);
+  if (!user || !(await user.correctPassword(password, user.password))) {
+    return next(new AppError('Incorrect email or password', 401));
+  }
+
+  createSendToken(user, 200, res);
 });
 
 export const protect = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
@@ -108,95 +104,95 @@ export const protect = catchAsync(async (req: CustomRequest, res: Response, next
   if (!currentUser) {
     return next(new AppError('The user belonging to this token does no longer exist.', 401));
   }
-  
+
   req.user = currentUser;
   next();
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // 1) Get user based on POSTed email
-    const user = await User.findOne({ email: req.body.email });
-    if (!user) {
-        // To prevent email enumeration attacks, we don't reveal that the user was not found
-        return res.status(200).json({ status: 'success', message: 'If the email is registered, a password reset link has been sent.' });
-    }
+  // 1) Get user based on POSTed email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user) {
+    // To prevent email enumeration attacks, we don't reveal that the user was not found
+    return res.status(200).json({ status: 'success', message: 'If the email is registered, a password reset link has been sent.' });
+  }
 
-    // 2) Generate the random reset token
-    const resetToken = (user as any).createPasswordResetToken();
+  // 2) Generate the random reset token
+  const resetToken = (user as any).createPasswordResetToken();
+  await user.save({ validateBeforeSave: false });
+
+  // 3) Send it to user's email
+  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${resetToken}`;
+  const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: 'Your password reset token (valid for 10 min)',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent to email!'
+    });
+
+  } catch (err) {
+    (user as any).passwordResetToken = undefined;
+    (user as any).passwordResetExpires = undefined;
     await user.save({ validateBeforeSave: false });
-
-    // 3) Send it to user's email
-    const resetURL = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${resetToken}`;
-    const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
-
-    try {
-        await sendEmail({
-            email: user.email,
-            subject: 'Your password reset token (valid for 10 min)',
-            message,
-        });
-
-        res.status(200).json({
-            status: 'success',
-            message: 'Token sent to email!'
-        });
-
-    } catch (err) {
-        (user as any).passwordResetToken = undefined;
-        (user as any).passwordResetExpires = undefined;
-        await user.save({ validateBeforeSave: false });
-        return next(new AppError('There was an error sending the email. Try again later!', 500));
-    }
+    return next(new AppError('There was an error sending the email. Try again later!', 500));
+  }
 });
 
 export const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // 1) Get user based on the token
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(req.params.token)
-        .digest('hex');
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
 
-    const user = await User.findOne({
-        passwordResetToken: hashedToken,
-        passwordResetExpires: { $gt: Date.now() }
-    });
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() }
+  });
 
-    // 2) If token has not expired, and there is a user, set the new password
-    if (!user) {
-        return next(new AppError('Token is invalid or has expired', 400));
-    }
+  // 2) If token has not expired, and there is a user, set the new password
+  if (!user) {
+    return next(new AppError('Token is invalid or has expired', 400));
+  }
 
-    user.password = req.body.password;
-    (user as any).passwordResetToken = undefined;
-    (user as any).passwordResetExpires = undefined;
-    await user.save();
+  user.password = req.body.password;
+  (user as any).passwordResetToken = undefined;
+  (user as any).passwordResetExpires = undefined;
+  await user.save();
 
-    // 3) Log the user in, send JWT
-    createSendToken(user, 200, res);
+  // 3) Log the user in, send JWT
+  createSendToken(user, 200, res);
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // 1) Get user based on the token
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(req.params.token)
-        .digest('hex');
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash('sha256')
+    .update(req.params.token)
+    .digest('hex');
 
-    const user = await User.findOne({ emailVerificationToken: hashedToken });
+  const user = await User.findOne({ emailVerificationToken: hashedToken });
 
-    if (!user) {
-        return next(new AppError('Token is invalid or has already been used', 400));
-    }
+  if (!user) {
+    return next(new AppError('Token is invalid or has already been used', 400));
+  }
 
-    // 2) If token is valid, set isEmailVerified to true
-    user.isEmailVerified = true;
-    (user as any).emailVerificationToken = undefined; // Clear the token
-    await user.save();
+  // 2) If token is valid, set isEmailVerified to true
+  user.isEmailVerified = true;
+  (user as any).emailVerificationToken = undefined; // Clear the token
+  await user.save();
 
-    res.status(200).json({
-        status: 'success',
-        message: 'Email successfully verified!'
-    });
+  res.status(200).json({
+    status: 'success',
+    message: 'Email successfully verified!'
+  });
 });
 
 export const restrictTo = (...roles: string[]) => {

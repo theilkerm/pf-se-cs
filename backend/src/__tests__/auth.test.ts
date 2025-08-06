@@ -19,7 +19,7 @@ afterAll(async () => {
 
 // Using a describe block for better organization
 describe('Auth Routes - /api/v1/auth', () => {
-    
+
     // Clear users before each test to ensure isolation
     beforeEach(async () => {
         await User.deleteMany({});
@@ -52,7 +52,7 @@ describe('Auth Routes - /api/v1/auth', () => {
             email: uniqueEmail,
             password: 'password123'
         };
-        
+
         // First, create the user
         await User.create(userData);
 
@@ -64,5 +64,23 @@ describe('Auth Routes - /api/v1/auth', () => {
         // Now it should correctly return a 400 error
         expect(res.statusCode).toBe(400);
         expect(res.body.message).toContain('Duplicate field value');
+    });
+
+    it('should fail to register if password is less than 6 characters', async () => {
+        const uniqueEmail = `short-password-${Date.now()}@example.com`;
+        const userData = {
+            firstName: 'Test',
+            lastName: 'User',
+            email: uniqueEmail,
+            password: '123' // Invalid password
+        };
+
+        const res = await request(app)
+            .post('/api/v1/auth/register')
+            .send(userData);
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.message).toBe('Invalid input data');
+        expect(res.body.errors[0].message).toBe('Password must be at least 6 characters long');
     });
 });
