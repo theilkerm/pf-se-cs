@@ -120,6 +120,16 @@ userSchema.pre<IUser>('save', async function (next) {
     next();
 });
 
+// Virtual populate for user's orders
+userSchema.virtual('orders', {
+    ref: 'Order',
+    foreignField: 'user',
+    localField: '_id'
+});
+
+userSchema.set('toJSON', { virtuals: true });
+userSchema.set('toObject', { virtuals: true });
+
 // Instance method to check if the provided password is correct
 userSchema.methods.correctPassword = async function (
     candidatePassword: string,

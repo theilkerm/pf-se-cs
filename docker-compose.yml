@@ -4,7 +4,6 @@ services:
   # Backend Service (Node.js/Express)
   backend:
     build: ./backend
-    container_name: ecom-backend
     ports:
       - "3001:3001"
     volumes:
@@ -22,7 +21,6 @@ services:
   # MongoDB Service
   mongo:
     image: mongo:latest
-    container_name: ecom-mongo
     ports:
       - "27017:27017"
     volumes:

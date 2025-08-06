@@ -1,13 +1,28 @@
 import { Router } from 'express';
-import { protect } from '../controllers/auth.controller.js';
-import { getMe } from '../controllers/user.controller.js';
+import { protect, restrictTo } from '../controllers/auth.controller.js';
+import {
+    getMe,
+    getAllUsers,
+    getUser,
+    updateUser,
+    deleteUser
+} from '../controllers/user.controller.js';
 
 const router = Router();
 
-// This middleware runs FOR ALL routes defined AFTER it in this file.
-// This means any route like /me, /updateProfile etc. will require the user to be logged in.
-router.use(protect);
-
+// --- Routes for the logged-in user ---
+router.use(protect); // All routes below this point are protected
 router.get('/me', getMe);
+
+// --- Routes for Admin only ---
+router.use(restrictTo('admin')); // All routes below this point are for admins only
+
+router.route('/')
+    .get(getAllUsers);
+    
+router.route('/:id')
+    .get(getUser)
+    .patch(updateUser)
+    .delete(deleteUser);
 
 export default router;

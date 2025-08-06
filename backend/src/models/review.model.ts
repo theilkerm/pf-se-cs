@@ -69,10 +69,10 @@ reviewSchema.statics.calculateAverageRating = async function(productId: mongoose
 };
 
 // Call the calculator after a review is saved or removed
-reviewSchema.post('save', function() {
-    // 'this.constructor' refers to the model (Review)
-    (this.constructor as any).calculateAverageRating(this.product);
-});
+// reviewSchema.post('save', function() {
+//     // 'this.constructor' refers to the model (Review)
+//     (this.constructor as any).calculateAverageRating(this.product);
+// });
 
 reviewSchema.post('remove' as any, function() {
     (this.constructor as any).calculateAverageRating(this.product);

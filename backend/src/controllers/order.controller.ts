@@ -71,7 +71,10 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
 // @route   GET /api/v1/orders/my-orders
 // @access  Private
 export const getMyOrders = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const orders = await Order.find({ user: req.user!._id }).sort({ createdAt: -1 });
+    // Find orders and populate the product details within orderItems
+    const orders = await Order.find({ user: req.user!._id })
+        .populate('orderItems.product', 'name price') // Populate product details
+        .sort({ createdAt: -1 });
 
     res.status(200).json({
         status: 'success',

@@ -56,7 +56,10 @@ export const approveReview = catchAsync(async (req: Request, res: Response, next
     }
 
     review.isApproved = true;
-    await review.save(); // This will trigger the 'post save' hook to calculate average
+    await review.save();
+    
+    // Manually trigger the calculation after approval to ensure it runs correctly
+    await (Review as any).calculateAverageRating(review.product);
 
     res.status(200).json({
         status: 'success',
