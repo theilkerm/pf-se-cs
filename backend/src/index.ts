@@ -1,25 +1,51 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
+import AppError from './utils/appError.js';
+import authRouter from './routes/auth.routes.js';
+
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: './.env' }); // Explicitly define path
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); // Body parser
+
+// --- ROUTES ---
+app.get('/', (req: Request, res: Response) => {
+  res.send('Welcome to the E-commerce API!');
+});
+
+// Use the auth router for all routes starting with /api/v1/auth
+app.use('/api/v1/auth', authRouter);
+
+// Handle all other undefined routes
+app.all('*', (req: Request, res: Response, next: NextFunction) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+});
+
+// --- GLOBAL ERROR HANDLING MIDDLEWARE ---
+app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+    // For development, you might want to see the stack trace
+    // stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    // error: err
+  });
+});
+
 
 // Environment variables
 const PORT = process.env.PORT || 3001;
 const MONGO_URI = process.env.MONGO_URI;
-
-// A simple route to check if the server is running
-app.get('/', (req: Request, res: Response) => {
-  res.send('Welcome to the E-commerce API!');
-});
 
 // Function to connect to DB and start the server
 const startServer = async () => {
