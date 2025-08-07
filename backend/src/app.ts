@@ -20,7 +20,9 @@ const app = express();
 // --- GLOBAL MIDDLEWARES ---
 
 // Allow Cross-Origin Requests
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000'
+}));
 
 // Rate Limiting: Limit requests from same IP to prevent brute-force attacks
 const limiter = rateLimit({

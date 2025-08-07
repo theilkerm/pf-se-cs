@@ -22,37 +22,48 @@ const importData = async () => {
         
         console.log('Old data cleared...');
 
-        // --- Create Users ---
-        // ... (Kullanıcı oluşturma kısmı aynı kalabilir)
-        const users = [];
-        users.push({
-            firstName: 'Admin', lastName: 'User', email: 'admin@example.com', password: 'password123', role: 'admin', isEmailVerified: true,
+        // --- Create Users (Corrected Method that triggers hooks) ---
+        const userList = [];
+        // Add one static admin user for easy login
+        userList.push({
+            firstName: 'Admin',
+            lastName: 'User',
+            email: 'admin@example.com',
+            password: 'password123',
+            role: 'admin',
+            isEmailVerified: true,
         });
+        // Generate 50 random customer users
         for (let i = 0; i < 50; i++) {
-            users.push({
-                firstName: faker.person.firstName(), lastName: faker.person.lastName(), email: faker.internet.email().toLowerCase(), password: 'password123', role: 'customer', isEmailVerified: true,
+            userList.push({
+                firstName: faker.person.firstName(),
+                lastName: faker.person.lastName(),
+                email: faker.internet.email().toLowerCase(),
+                password: 'password123',
+                role: 'customer',
+                isEmailVerified: true,
             });
         }
-        const createdUsers = await User.insertMany(users);
-        console.log(`${createdUsers.length} users created...`);
+        
+        // Using a loop with User.create for each individual user
+        // This is the ONLY way to ensure pre('save') hooks run for each document.
+        console.log('Creating users with hashed passwords...');
+        for (const userData of userList) {
+            await User.create(userData);
+        }
+        console.log(`${userList.length} users created successfully.`);
 
-        // --- Create Categories (with uniqueness check) ---
+
+        // --- Create Categories ---
         const categorySet = new Set<string>();
-        // Generate unique category names
-        while (categorySet.size < 10) { // We want 10 unique categories
+        while (categorySet.size < 10) {
             categorySet.add(faker.commerce.department());
         }
-        
-        const categories = Array.from(categorySet).map(name => ({
-            name: name,
-            description: faker.lorem.sentence(),
-        }));
-        
+        const categories = Array.from(categorySet).map(name => ({ name: name, description: faker.lorem.sentence() }));
         const createdCategories = await Category.insertMany(categories);
         console.log(`${createdCategories.length} categories created...`);
 
         // --- Create Products ---
-        // ... (Ürün oluşturma kısmı aynı kalabilir)
         const products = [];
         for (let i = 0; i < 100; i++) {
             products.push({
@@ -83,7 +94,6 @@ const importData = async () => {
     }
 };
 
-// ... deleteData fonksiyonu aynı kalabilir ...
 const deleteData = async () => {
     try {
         await mongoose.connect(MONGO_URI!);
