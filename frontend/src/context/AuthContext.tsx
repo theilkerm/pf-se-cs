@@ -16,6 +16,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (data: any) => Promise<void>;
+  register: (data: any) => Promise<void>; // Added register function
   logout: () => void;
   loading: boolean;
 }
@@ -29,7 +30,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check for a token in localStorage when the app loads
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     if (storedToken && storedUser) {
@@ -39,26 +39,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
+  const handleAuthSuccess = (token: string, user: User) => {
+    setToken(token);
+    setUser(user);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    router.push('/');
+  };
+  
   const login = async (loginData: any) => {
     try {
       const data = await fetcher('/auth/login', {
         method: 'POST',
         body: JSON.stringify(loginData),
       });
-      
-      const { token: apiToken, data: { user: apiUser } } = data;
-
-      setToken(apiToken);
-      setUser(apiUser);
-
-      // Store token and user in localStorage to persist session
-      localStorage.setItem('token', apiToken);
-      localStorage.setItem('user', JSON.stringify(apiUser));
-      
-      router.push('/'); // Redirect to homepage after login
+      handleAuthSuccess(data.token, data.data.user);
     } catch (error) {
       console.error('Login failed:', error);
-      // Here you would handle login errors, e.g., show a notification
+      throw error;
+    }
+  };
+
+  const register = async (registerData: any) => {
+    try {
+      const data = await fetcher('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(registerData),
+      });
+      // After successful registration, log the user in automatically
+      handleAuthSuccess(data.token, data.data.user);
+    } catch (error) {
+      console.error('Registration failed:', error);
       throw error;
     }
   };
@@ -72,13 +83,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
-      {children}
+    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
