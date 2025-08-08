@@ -84,3 +84,37 @@ export const getMyOrders = catchAsync(async (req: CustomRequest, res: Response, 
         }
     });
 });
+
+// @desc    Get a single order by ID
+// @route   GET /api/v1/orders/:id
+// @access  Private
+export const getOrderById = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        return next(new AppError('Order not found with that ID', 404));
+    }
+
+    // --- HATA AYIKLAMA KODU ---
+    console.log('------------------------------------');
+    console.log('Checking Order Authorization...');
+    console.log('Order belongs to User ID:', order.user.toString());
+    console.log('Request is from User ID:', req.user!._id.toString());
+    console.log('Do they match?', order.user.toString() === req.user!._id.toString());
+    console.log('------------------------------------');
+    // --- HATA AYIKLAMA KODU SONU ---
+
+    if (order.user.toString() !== req.user!._id.toString()) {
+        return next(new AppError('Not authorized to view this order', 403));
+    }
+
+    // We populate here, after the authorization check
+    await order.populate({ path: 'orderItems.product', select: 'name images' });
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            order
+        }
+    });
+});
