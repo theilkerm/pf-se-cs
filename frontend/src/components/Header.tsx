@@ -16,33 +16,27 @@ export default function Header() {
         </div>
 
         <div className="flex items-center space-x-6">
-          <Link href="/" className="hover:text-gray-300"> 
+          <Link href="/" className="hover:text-gray-300">
             Products
-          </Link>
-          <Link href="/cart" className="hover:text-gray-300">
-            Cart
           </Link>
           
           {loading ? null : (
             <>
               {user ? (
+                // If user is logged in
                 <>
+                  <Link href="/cart" className="hover:text-gray-300">Cart</Link>
+                  <Link href="/my-orders" className="hover:text-gray-300">My Orders</Link> {/* YENİ LİNK */}
                   <span className="font-semibold">Welcome, {user.firstName}</span>
-                  <button 
-                    onClick={logout} 
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md"
-                  >
+                  <button onClick={logout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md">
                     Logout
                   </button>
                 </>
               ) : (
+                // If user is not logged in
                 <>
-                  <Link href="/login" className="hover:text-gray-300">
-                    Login
-                  </Link>
-                  <Link href="/register" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md">
-                    Register
-                  </Link>
+                  <Link href="/login" className="hover:text-gray-300">Login</Link>
+                  <Link href="/register" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md">Register</Link>
                 </>
               )}
             </>
