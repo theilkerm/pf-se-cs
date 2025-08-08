@@ -1,30 +1,25 @@
-// This function will handle all our API requests
+// lib/api.ts
 export async function fetcher(endpoint: string, options: RequestInit = {}) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  
-  if (!apiUrl) {
-    throw new Error("API URL is not configured!");
+  const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const url = `${base}${path}`;
+
+  console.log('fetch URL:', url); // Debug için
+
+  const defaultHeaders: HeadersInit = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+
+  const headers: HeadersInit = { ...defaultHeaders, ...(options.headers || {}) };
+
+  const res = await fetch(url, { ...options, headers });
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { msg = (await res.json())?.message || msg; } catch {}
+    throw new Error(msg);
   }
 
-  try {
-    const response = await fetch(`${apiUrl}${endpoint}`, {
-      // Default options can be set here, like headers
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
-    });
-
-    if (!response.ok) {
-      // If the server responds with a non-2xx status, we throw an error
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Something went wrong');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("API fetcher error:", error);
-    throw error; // Re-throw the error to be handled by the component
-  }
+  try { return await res.json(); } catch { return null as any; }
 }
