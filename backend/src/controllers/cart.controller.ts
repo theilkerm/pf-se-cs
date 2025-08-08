@@ -13,86 +13,123 @@ const catchAsync = (fn: Function) => {
   };
 };
 
-// @desc    Get user's shopping cart
-// @route   GET /api/v1/cart
-// @access  Private
+// --- Helper Functions (Not Exported) ---
+
+/**
+ * Finds a user by their ID or throws a 404 error.
+ */
+const findUserById = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError('User for this token not found.', 404);
+  }
+  return user;
+};
+
+
+
+/**
+ * Finds a product by its ID or throws a 404 error.
+ */
+const findProductById = async (productId: string) => {
+  const product = await Product.findById(productId);
+  if (!product) {
+    throw new AppError('Product not found', 404);
+  }
+  return product;
+};
+
+/**
+ * Checks if there is enough stock for the requested product.
+ */
+const checkStockAvailability = (product: any, user: any, requestedQuantity: number) => {
+  const itemIndex = user.cart.findIndex((item: any) => item.product.toString() === product._id.toString());
+  const quantityInCart = itemIndex > -1 ? user.cart[itemIndex].quantity : 0;
+  const totalQuantity = quantityInCart + requestedQuantity;
+
+  if (product.stock < totalQuantity) {
+    throw new AppError(`Insufficient stock. Only ${product.stock} items available.`, 400);
+  }
+
+  return { itemIndex, totalQuantity };
+};
+
+/**
+ * Updates the user's cart array and saves the document.
+ */
+const updateUserCart = (user: any, product: any, quantity: number, itemIndex: number, totalQuantity: number) => {
+  if (itemIndex > -1) {
+    user.cart[itemIndex].quantity = totalQuantity;
+  } else {
+    user.cart.push({ product: product._id, quantity, price: product.price });
+  }
+  return user.save({ validateBeforeSave: false });
+};
+
+
+// --- EXPORTED CONTROLLER FUNCTIONS ---
+
 export const getCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const user = await User.findById(req.user!._id).populate({
-        path: 'cart.product',
-        select: 'name images price'
-    });
-
-    if (!user) {
-        return next(new AppError('User not found', 404));
-    }
-
-    res.status(200).json({
-        status: 'success',
-        data: {
-            cart: user.cart
-        }
-    });
+  const user = await User.findById(req.user!._id).populate({
+    path: 'cart.product',
+    select: 'name images price'
+  });
+  if (!user) { return next(new AppError('User not found', 404)); }
+  res.status(200).json({ status: 'success', data: { cart: user.cart } });
 });
 
-// @desc    Add item to cart
-// @route   POST /api/v1/cart
-// @access  Private
 export const addItemToCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { productId, quantity } = req.body;
-    const user = req.user!;
+  const { productId, quantity } = req.body;
 
-    const product = await Product.findById(productId);
-    if (!product) {
-        return next(new AppError('Product not found', 404));
-    }
+  const user = await findUserById(req.user!._id);
+  const product = await findProductById(productId);
+  const { itemIndex, totalQuantity } = checkStockAvailability(product, user, quantity);
 
-    
+  const updatedUser = await updateUserCart(user, product, quantity, itemIndex, totalQuantity);
 
-    const itemIndex = user.cart.findIndex(item => item.product.toString() === productId);
-    const currentQuantityInCart = itemIndex > -1 ? user.cart[itemIndex].quantity : 0;
-    const requestedTotalQuantity = currentQuantityInCart + quantity;
+  await updatedUser.populate({ path: 'cart.product', select: 'name images price' });
 
-    if (product.stock < requestedTotalQuantity) {
-      return next(
-        new AppError(
-          `Insufficient stock. Only ${product.stock} items available. You already have ${currentQuantityInCart} in your cart.`,
-          400
-        )
-      );
-    }
-    
-    if (itemIndex > -1) {
-        // Product exists in cart, update quantity
-        user.cart[itemIndex].quantity += quantity;
-    } else {
-        // Product does not exist in cart, add new item
-        user.cart.push({ product: productId, quantity, price: product.price });
-    }
-
-    await user.save({ validateBeforeSave: false }); // Skip validation for other fields
-
-    res.status(200).json({
-        status: 'success',
-        message: 'Item added to cart',
-        data: {
-            cart: user.cart
-        }
-    });
+  res.status(200).json({ status: 'success', message: 'Item added to cart', data: { cart: updatedUser.cart } });
 });
 
-// @desc    Remove item from cart
-// @route   DELETE /api/v1/cart/:productId
-// @access  Private
 export const removeItemFromCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { productId } = req.params;
-    const user = req.user!;
+  const { productId } = req.params;
+  const user = await findUserById(req.user!._id);
+  user.cart = user.cart.filter(item => item.product.toString() !== productId);
+  await user.save({ validateBeforeSave: false });
+  res.status(204).json({ status: 'success', data: null });
+});
 
-    user.cart = user.cart.filter(item => item.product.toString() !== productId);
+export const updateItemQuantity = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
 
-    await user.save({ validateBeforeSave: false });
+  const { productId, quantity } = req.body;
+  const user = await User.findById(req.user!._id);
+  if (!user) { return next(new AppError('User not found', 404)); }
 
-    res.status(204).json({
-        status: 'success',
-        data: null
-    });
+  const itemIndex = user.cart.findIndex(item => item.product.toString() === productId);
+
+  if (itemIndex > -1) {
+    const product = await Product.findById(productId);
+    if (!product) { return next(new AppError('Product not found in DB', 404)); }
+    if (product.stock < quantity) { return next(new AppError('Insufficient stock', 400)); }
+
+    user.cart[itemIndex].quantity = quantity;
+  } else {
+    return next(new AppError('Product not found in cart', 404));
+  }
+
+  await user.save({ validateBeforeSave: false });
+  await user.populate({ path: 'cart.product', select: 'name images price stock' });
+
+  res.status(200).json({ status: 'success', data: { cart: user.cart } });
+});
+
+export const clearCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+  const user = await User.findById(req.user!._id);
+  if (!user) { return next(new AppError('User not found', 404)); }
+
+  user.cart = [];
+  await user.save({ validateBeforeSave: false });
+
+  res.status(204).json({ status: 'success', data: null });
 });
