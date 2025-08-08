@@ -9,6 +9,8 @@ services:
     volumes:
       # Mount the src folder for hot-reloading
       - ./backend/src:/app/src
+    env_file:
+      - ./backend/.env
     environment:
       # Connection string for MongoDB running in another container
       - MONGO_URI=mongodb://mongo:27017/e-commerce-db
