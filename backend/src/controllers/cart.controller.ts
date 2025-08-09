@@ -57,11 +57,11 @@ const checkStockAvailability = (product: any, user: any, requestedQuantity: numb
 /**
  * Updates the user's cart array and saves the document.
  */
-const updateUserCart = (user: any, product: any, quantity: number, itemIndex: number, totalQuantity: number) => {
+const updateUserCart = (user: any, product: any, quantity: number, itemIndex: number, totalQuantity: number, variant: any) => {
   if (itemIndex > -1) {
     user.cart[itemIndex].quantity = totalQuantity;
   } else {
-    user.cart.push({ product: product._id, quantity, price: product.price });
+    user.cart.push({ product: product._id, quantity, price: product.price, variant }); // variant'ı ekle
   }
   return user.save({ validateBeforeSave: false });
 };
@@ -79,17 +79,25 @@ export const getCart = catchAsync(async (req: CustomRequest, res: Response, next
 });
 
 export const addItemToCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { productId, quantity } = req.body;
+    const { productId, quantity, variant } = req.body; // variant'ı body'den al
 
-  const user = await findUserById(req.user!._id);
-  const product = await findProductById(productId);
-  const { itemIndex, totalQuantity } = checkStockAvailability(product, user, quantity);
+    const user = await findUserById(req.user!._id);
+    const product = await findProductById(productId);
 
-  const updatedUser = await updateUserCart(user, product, quantity, itemIndex, totalQuantity);
+    // Find item with the same product ID AND the same variant
+    const itemIndex = user.cart.findIndex(item => 
+        item.product.toString() === productId && 
+        item.variant?.type === variant?.type && 
+        item.variant?.value === variant?.value
+    );
 
-  await updatedUser.populate({ path: 'cart.product', select: 'name images price' });
+    const { totalQuantity } = checkStockAvailability(product, user, quantity, itemIndex);
 
-  res.status(200).json({ status: 'success', message: 'Item added to cart', data: { cart: updatedUser.cart } });
+    // Pass the variant to the update function
+    await updateUserCart(user, product, quantity, itemIndex, totalQuantity, variant);
+
+    await user.populate({ path: 'cart.product', select: 'name images price' });
+    res.status(200).json({ status: 'success', message: 'Item added to cart', data: { cart: user.cart } });
 });
 
 export const removeItemFromCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {

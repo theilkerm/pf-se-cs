@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { faker } from '@faker-js/faker'; // Import Faker
+import { faker } from '@faker-js/faker';
 
 // Import Models
 import User from '../models/user.model.js';
@@ -22,10 +22,10 @@ const importData = async () => {
         
         console.log('Old data cleared...');
 
-        // --- Create Users (Corrected Method that triggers hooks) ---
-        const userList = [];
+        // --- Create Users ---
+        const users = [];
         // Add one static admin user for easy login
-        userList.push({
+        users.push({
             firstName: 'Admin',
             lastName: 'User',
             email: 'admin@example.com',
@@ -33,9 +33,9 @@ const importData = async () => {
             role: 'admin',
             isEmailVerified: true,
         });
-        // Generate 50 random customer users
-        for (let i = 0; i < 50; i++) {
-            userList.push({
+        // Generate 20 random customer users
+        for (let i = 0; i < 20; i++) {
+            users.push({
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 email: faker.internet.email().toLowerCase(),
@@ -44,42 +44,61 @@ const importData = async () => {
                 isEmailVerified: true,
             });
         }
-        
-        // Using a loop with User.create for each individual user
-        // This is the ONLY way to ensure pre('save') hooks run for each document.
+        // Use a loop with User.create to ensure pre('save') hooks run
         console.log('Creating users with hashed passwords...');
-        for (const userData of userList) {
+        for (const userData of users) {
             await User.create(userData);
         }
-        console.log(`${userList.length} users created successfully.`);
+        console.log(`${users.length} users created successfully.`);
 
 
-        // --- Create Categories ---
-        const categorySet = new Set<string>();
-        while (categorySet.size < 10) {
-            categorySet.add(faker.commerce.department());
-        }
-        const categories = Array.from(categorySet).map(name => ({ name: name, description: faker.lorem.sentence() }));
-        const createdCategories = await Category.insertMany(categories);
+        // --- Create the 8 specific categories from the document ---
+        const specificCategories = [
+            { name: 'Electronics', description: 'Gadgets and devices' },
+            { name: 'Clothing', description: 'Apparel and accessories' },
+            { name: 'Home and Garden', description: 'Items for your home and garden' },
+            { name: 'Sports', description: 'Sporting goods and equipment' },
+            { name: 'Books', description: 'Printed and digital books' },
+            { name: 'Health and Beauty', description: 'Personal care and beauty products' },
+            { name: 'Toys', description: 'Toys and games for all ages' },
+            { name: 'Food', description: 'Groceries and specialty foods' },
+        ];
+        const createdCategories = await Category.insertMany(specificCategories);
         console.log(`${createdCategories.length} categories created...`);
 
-        // --- Create Products ---
+
+        // --- Create Products with Variants ---
         const products = [];
         for (let i = 0; i < 100; i++) {
+            const randomCategory = faker.helpers.arrayElement(createdCategories);
+            let variants = [];
+
+            if (randomCategory.name === 'Clothing') {
+                const sizes = ['S', 'M', 'L', 'XL'];
+                const selectedSizes = faker.helpers.arrayElements(sizes, faker.number.int({ min: 2, max: 4 }));
+                selectedSizes.forEach(size => variants.push({ type: 'Size', value: size }));
+                variants.push({ type: 'Color', value: faker.color.human() });
+            } else if (randomCategory.name === 'Electronics') {
+                const colors = ['Black', 'White', 'Silver', 'Space Gray'];
+                const selectedColors = faker.helpers.arrayElements(colors, faker.number.int({ min: 2, max: 3 }));
+                selectedColors.forEach(color => {
+                    variants.push({ type: 'Color', value: color });
+                });
+            }
+
             products.push({
                 name: faker.commerce.productName(),
-                description: faker.lorem.paragraphs(2),
-                price: parseFloat(faker.commerce.price({ min: 10, max: 1000 })),
-                category: faker.helpers.arrayElement(createdCategories)._id,
+                description: faker.commerce.productDescription(),
+                price: parseFloat(faker.commerce.price({ min: 10, max: 2000 })),
+                category: randomCategory._id,
                 images: [`/images/product-${i+1}.jpg`],
                 stock: faker.number.int({ min: 0, max: 200 }),
-                isFeatured: faker.datatype.boolean(),
+                variants: variants
             });
         }
-        const createdProducts = await Product.insertMany(products);
-        console.log(`${createdProducts.length} products created...`);
-
-
+        await Product.insertMany(products);
+        console.log(`${products.length} products with variants created...`);
+        
         console.log('---------------------------');
         console.log('Data Imported Successfully!');
         console.log('---------------------------');
@@ -110,6 +129,7 @@ const deleteData = async () => {
     }
 };
 
+// Check for command line arguments to decide which function to run
 if (process.argv[2] === '--import') {
     importData();
 } else if (process.argv[2] === '--delete') {

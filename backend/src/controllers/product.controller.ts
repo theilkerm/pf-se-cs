@@ -9,23 +9,46 @@ const catchAsync = (fn: Function) => {
   };
 };
 
-// @desc    Get all products
+// @desc    Get all products with filtering, sorting, and pagination
 // @route   GET /api/v1/products
 // @access  Public
 export const getAllProducts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // Basic filtering by category
-    const filter = req.query.category ? { category: req.query.category } : {};
+    // 1. Filtering
+    const queryObj: { [key: string]: any } = { ...req.query };
+    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    excludedFields.forEach(el => delete queryObj[el]);
+    // Example: ?category=categoryId
+
+    // 2. Sorting
+    let sort: { [key: string]: 1 | -1 } = { createdAt: -1 }; // Default sort by newest
+    if (req.query.sort) {
+        const sortBy = req.query.sort as string;
+        if (sortBy === 'price-asc') sort = { price: 1 };
+        if (sortBy === 'price-desc') sort = { price: -1 };
+    }
+
+    // 3. Pagination
+    const page = parseInt(req.query.page as string, 10) || 1;
+    const limit = parseInt(req.query.limit as string, 10) || 12; // 12 products per page
+    const skip = (page - 1) * limit;
+
+    // Execute Query
+    const products = await Product.find(queryObj).sort(sort).skip(skip).limit(limit).populate('category');
     
-    const products = await Product.find(filter).populate('category');
-    
+    // Get total count of documents for pagination
+    const totalProducts = await Product.countDocuments(queryObj);
+
     res.status(200).json({
         status: 'success',
         results: products.length,
         data: {
-            products
+            products,
+            page,
+            totalPages: Math.ceil(totalProducts / limit)
         }
     });
 });
+
 
 // @desc    Create a new product
 // @route   POST /api/v1/products

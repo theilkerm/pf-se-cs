@@ -5,12 +5,21 @@ import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Variant } from '@/types'; // Import Variant type
 
+// Update the interface to include order items
 interface IOrderSummary {
   _id: string;
   totalPrice: number;
   orderStatus: string;
   createdAt: string;
+  orderItems: {
+    name: string;
+    quantity: number;
+    price: number;
+    product: string;
+    variant?: Variant;
+  }[];
 }
 
 export default function MyOrdersPage() {
@@ -55,37 +64,48 @@ export default function MyOrdersPage() {
       {orders.length === 0 ? (
         <p className="text-gray-500">You haven't placed any orders yet.</p>
       ) : (
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map(order => (
-                <tr key={order._id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{order._id.substring(0, 8)}...</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.totalPrice.toFixed(2)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      {order.orderStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link href={`/orders/${order._id}`} className="text-blue-600 hover:text-blue-900">
-                      View Details
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-6">
+          {/* Map over each order and display it as a card */}
+          {orders.map(order => (
+            <div key={order._id} className="bg-white shadow-md rounded-lg p-6 border">
+              <div className="flex justify-between items-center border-b pb-4 mb-4">
+                <div>
+                  <p className="text-sm text-gray-500">Order ID: #{order._id.substring(0, 8)}...</p>
+                  <p className="text-sm text-gray-500">Date: {new Date(order.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-sm text-gray-500">Status</p>
+                    <p className="font-semibold text-lg">{order.orderStatus}</p>
+                </div>
+              </div>
+              
+              {/* List of items within the order */}
+              <div className="space-y-4">
+                {order.orderItems.map(item => (
+                  <div key={item.product} className="flex justify-between items-center">
+                    <div>
+                      <p className="font-semibold">{item.name}</p>
+                      {/* Display the selected variant if it exists */}
+                      {item.variant && (
+                        <p className="text-sm text-gray-500">
+                          {item.variant.type}: {item.variant.value}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-gray-700">x {item.quantity}</p>
+                    <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center border-t pt-4 mt-4">
+                <Link href={`/orders/${order._id}`} className="text-blue-600 hover:text-blue-900 font-semibold">
+                  View Details
+                </Link>
+                <p className="font-bold text-xl">Total: ${order.totalPrice.toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

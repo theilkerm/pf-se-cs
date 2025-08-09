@@ -29,7 +29,11 @@ export interface IUser extends mongoose.Document {
     cart: {
         product: mongoose.Types.ObjectId;
         quantity: number;
-        price: number; // Price at the time of adding to cart
+        price: number;
+        variant: {
+            type: { type: String };
+            value: { type: String };
+        };
     }[];
     correctPassword(candidatePassword: string, userPassword?: string): Promise<boolean>;
 }
@@ -91,15 +95,11 @@ const userSchema = new Schema<IUser>(
                     type: Schema.Types.ObjectId,
                     ref: 'Product',
                 },
-                quantity: {
-                    type: Number,
-                    required: true,
-                    min: 1,
-                    default: 1
-                },
-                price: {
-                    type: Number,
-                    required: true,
+                quantity: { type: Number, required: true, min: 1, default: 1 },
+                price: { type: Number, required: true, },
+                variant: {
+                    type: { type: String },
+                    value: { type: String }
                 }
             }
         ]
@@ -140,7 +140,7 @@ userSchema.methods.correctPassword = async function (
     return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.createPasswordResetToken = function(): string {
+userSchema.methods.createPasswordResetToken = function (): string {
     // 1) Generate a random token
     const resetToken = crypto.randomBytes(32).toString('hex');
 
@@ -149,7 +149,7 @@ userSchema.methods.createPasswordResetToken = function(): string {
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
-    
+
     // Set token to expire in 10 minutes
     this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
 
@@ -158,14 +158,14 @@ userSchema.methods.createPasswordResetToken = function(): string {
 };
 
 
-userSchema.methods.createEmailVerificationToken = function(): string {
+userSchema.methods.createEmailVerificationToken = function (): string {
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
     this.emailVerificationToken = crypto
         .createHash('sha256')
         .update(verificationToken)
         .digest('hex');
-    
+
     // You can add an expiry for this token as well if needed
     // this.emailVerificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 

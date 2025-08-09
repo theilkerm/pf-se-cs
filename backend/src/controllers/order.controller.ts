@@ -5,13 +5,13 @@ import Product from '../models/product.model.js';
 import AppError from '../utils/appError.js';
 
 interface CustomRequest extends Request {
-  user?: IUser;
+    user?: IUser;
 }
 
 const catchAsync = (fn: Function) => {
-  return (req: CustomRequest, res: Response, next: NextFunction) => {
-    fn(req, res, next).catch(next);
-  };
+    return (req: CustomRequest, res: Response, next: NextFunction) => {
+        fn(req, res, next).catch(next);
+    };
 };
 
 // @desc    Create a new order from cart
@@ -24,7 +24,7 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
     if (!user || user.cart.length === 0) {
         return next(new AppError('Your cart is empty', 400));
     }
-    
+
     if (!shippingAddress) {
         return next(new AppError('Shipping address is required', 400));
     }
@@ -36,6 +36,7 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
         price: item.price,
         image: (item.product as any).images[0] || '/img/default.jpg',
         product: item.product._id,
+        variant: item.variant
     }));
 
     const totalPrice = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);

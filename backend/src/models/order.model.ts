@@ -44,6 +44,10 @@ const orderSchema = new Schema<IOrder>(
                     ref: 'Product',
                     required: true,
                 },
+                variant: {
+                    type: { type: String },
+                    value: { type: String }
+                }
             },
         ],
         shippingAddress: {
