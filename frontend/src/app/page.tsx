@@ -67,7 +67,7 @@ const ProductCard = ({ product, viewMode }: { product: IProduct, viewMode: 'grid
   );
 };
 
-// --- NEWSLETTER COMPONENT DEFINITION ---
+// --- NEWSLETTER COMPONENT WITH CORRECT API CALL ---
 const NewsletterSignup = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
@@ -78,12 +78,14 @@ const NewsletterSignup = () => {
         setLoading(true);
         setMessage('');
         try {
-            // This is a placeholder for a real API call
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setMessage(`Thank you for subscribing, ${email}!`);
+            const response = await fetcher('/newsletter', {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+            setMessage(response.message);
             setEmail('');
         } catch (error: any) {
-            setMessage(error.message || 'An error occurred.');
+            setMessage(error.message || 'An error occurred. Please try again.');
         } finally {
             setLoading(false);
         }
