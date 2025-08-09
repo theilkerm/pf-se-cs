@@ -51,8 +51,19 @@ export default function EditProductPage() {
     (newVariants[index] as any)[field] = value;
     setVariants(newVariants);
   };
-  const addVariant = () => setVariants([...variants, { type: 'Color', value: '', stock: 0, _id: new Date().toISOString() }]);
-  const removeVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index));
+  const addVariant = () => {
+    const newVariant = { 
+        type: 'Color', 
+        value: '', 
+        stock: 0, 
+        tempId: new Date().toISOString() // Use a temporary unique key for rendering
+    };
+    setVariants([...variants, newVariant as any]);
+  };
+  
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

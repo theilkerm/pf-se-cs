@@ -35,6 +35,7 @@ export interface IUser extends mongoose.Document {
             value: { type: String };
         };
     }[];
+    wishlist: mongoose.Types.ObjectId[];
     correctPassword(candidatePassword: string, userPassword?: string): Promise<boolean>;
 }
 
@@ -102,7 +103,11 @@ const userSchema = new Schema<IUser>(
                     value: { type: String }
                 }
             }
-        ]
+        ],
+        wishlist: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Product'
+        }],
     },
     {
         timestamps: true, // Adds createdAt and updatedAt timestamps

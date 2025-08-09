@@ -29,7 +29,19 @@ export const getMe = (req: CustomRequest, res: Response) => {
 // @route   GET /api/v1/users
 // @access  Private/Admin
 export const getAllUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const users = await User.find({ role: 'customer' });
+    const filter: { [key: string]: any } = { role: 'customer' };
+
+    if (req.query.search) {
+        const searchRegex = new RegExp(req.query.search as string, 'i');
+        // Search in multiple fields: firstName, lastName, email
+        filter.$or = [
+            { firstName: searchRegex },
+            { lastName: searchRegex },
+            { email: searchRegex }
+        ];
+    }
+
+    const users = await User.find(filter);
 
     res.status(200).json({
         status: 'success',

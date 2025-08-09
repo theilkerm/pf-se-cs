@@ -34,6 +34,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <li>
               <Link href="/admin/products" className="block py-2 px-4 rounded hover:bg-gray-700">Products</Link>
             </li>
+            <li>
+              <Link href="/admin/orders" className="block py-2 px-4 rounded hover:bg-gray-700">Orders</Link>
+            </li>
+            <li>
+              <Link href="/admin/customers" className="block py-2 px-4 rounded hover:bg-gray-700">Customers</Link>
+            </li>
             {/* Add more admin links here in the future */}
           </ul>
         </nav>

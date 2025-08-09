@@ -90,3 +90,38 @@ export const getOrderById = catchAsync(async (req: CustomRequest, res: Response,
         }
     });
 });
+
+// @desc    Get all orders (for admin)
+// @route   GET /api/v1/orders
+// @access  Private/Admin
+export const getAllOrders = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const orders = await Order.find().populate('user', 'firstName lastName').sort({ createdAt: -1 });
+    res.status(200).json({
+        status: 'success',
+        results: orders.length,
+        data: { orders }
+    });
+});
+
+// @desc    Update order status (for admin)
+// @route   PATCH /api/v1/orders/:id/status
+// @access  Private/Admin
+export const updateOrderStatus = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+        return next(new AppError('Order not found with that ID', 404));
+    }
+
+    order.orderStatus = status;
+    if (status === 'Delivered') {
+        order.deliveredAt = new Date();
+    }
+    await order.save();
+
+    res.status(200).json({
+        status: 'success',
+        data: { order }
+    });
+});

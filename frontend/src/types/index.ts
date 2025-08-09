@@ -50,3 +50,15 @@ export interface OrderItem {
     product: string;
     variant?: Variant; // And also part of the order item
 }
+
+export interface IOrder {
+    _id: string;
+    user: { 
+        _id: string;
+        firstName: string;
+        lastName: string;
+    };
+    totalPrice: number;
+    orderStatus: string;
+    createdAt: string;
+}

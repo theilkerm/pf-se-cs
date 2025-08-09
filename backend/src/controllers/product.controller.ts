@@ -15,9 +15,21 @@ const catchAsync = (fn: Function) => {
 export const getAllProducts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // 1. Filtering
     const queryObj: { [key: string]: any } = { ...req.query };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
+    const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
     excludedFields.forEach(el => delete queryObj[el]);
-    // Example: ?category=categoryId
+
+    // Advanced filtering for price (gte, lte)
+    let queryStr = JSON.stringify(queryObj);
+    queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+    
+    let filter = JSON.parse(queryStr);
+
+    if (req.query.search) {
+        filter.name = {
+            $regex: req.query.search,
+            $options: 'i'
+        };
+    }
 
     // 2. Sorting
     let sort: { [key: string]: 1 | -1 } = { createdAt: -1 }; // Default sort by newest
@@ -25,6 +37,7 @@ export const getAllProducts = catchAsync(async (req: Request, res: Response, nex
         const sortBy = req.query.sort as string;
         if (sortBy === 'price-asc') sort = { price: 1 };
         if (sortBy === 'price-desc') sort = { price: -1 };
+        if (sortBy === 'rating') sort = { averageRating: -1 }; // Sort by highest rating
     }
 
     // 3. Pagination
@@ -33,10 +46,10 @@ export const getAllProducts = catchAsync(async (req: Request, res: Response, nex
     const skip = (page - 1) * limit;
 
     // Execute Query
-    const products = await Product.find(queryObj).sort(sort).skip(skip).limit(limit).populate('category');
+    const products = await Product.find(filter).sort(sort).skip(skip).limit(limit).populate('category');
     
     // Get total count of documents for pagination
-    const totalProducts = await Product.countDocuments(queryObj);
+    const totalProducts = await Product.countDocuments(filter);
 
     res.status(200).json({
         status: 'success',
@@ -56,13 +69,12 @@ export const getAllProducts = catchAsync(async (req: Request, res: Response, nex
 export const createProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const productData = { ...req.body };
     
-    if (productData.variants) {
+    // Check if variants is a string before parsing
+    if (productData.variants && typeof productData.variants === 'string') {
         productData.variants = JSON.parse(productData.variants);
     }
 
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        // req.files'dan gelen her dosyanın yolunu alıp, frontend'in
-        // erişebileceği bir URL'e dönüştürüyoruz.
         productData.images = req.files.map((file: any) => `/uploads/${file.filename}`);
     }
 
@@ -99,13 +111,11 @@ export const getProduct = catchAsync(async (req: Request, res: Response, next: N
 export const updateProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const updateData = { ...req.body };
 
-    // Parse variants if they are sent as a string
-    if (updateData.variants) {
+    // Check if variants is a string before parsing
+    if (updateData.variants && typeof updateData.variants === 'string') {
         updateData.variants = JSON.parse(updateData.variants);
     }
     
-    // In a real app, you would handle new image uploads here and add to the images array
-
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
         new: true,
         runValidators: true
