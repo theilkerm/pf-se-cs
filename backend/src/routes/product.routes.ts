@@ -6,7 +6,9 @@ import {
     updateProduct,
     deleteProduct,
     getRelatedProducts,
-    getProductsByIds
+    getProductsByIds,
+    bulkUpdateProducts,
+    getAdminProducts
 } from '../controllers/product.controller.js';
 import { protect, restrictTo } from '../controllers/auth.controller.js';
 import multer from 'multer';
@@ -25,6 +27,8 @@ router.route('/')
     );
 
 router.post('/by-ids', getProductsByIds);
+router.patch('/bulk-update', protect, restrictTo('admin'), bulkUpdateProducts);
+router.get('/admin', protect, restrictTo('admin'), getAdminProducts);
 
 router.get('/:id/related', getRelatedProducts);
 // Routes for a specific product by ID

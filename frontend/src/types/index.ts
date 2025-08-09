@@ -20,6 +20,7 @@ export interface IProduct {
   variants: Variant[];
   averageRating: number;
   numReviews: number;
+  isActive: boolean;
 }
 
 export interface IReview {

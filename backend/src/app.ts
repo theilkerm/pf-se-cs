@@ -5,8 +5,6 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import AppError from './utils/appError.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 // Import all routers
 import authRouter from './routes/auth.routes.js';
@@ -17,36 +15,36 @@ import cartRouter from './routes/cart.routes.js';
 import orderRouter from './routes/order.routes.js';
 import reviewRouter from './routes/review.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
-import wishlistRouter from './routes/wishlist.routes.js';
 import newsletterRouter from './routes/newsletter.routes.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// --- GLOBAL MIDDLEWARES (in correct order) ---
+// --- GLOBAL MIDDLEWARES ---
 
-// 1. CORS
-app.use(cors({ origin: 'http://localhost:3000' }));
+// More explicit CORS Configuration to handle preflight requests and Authorization headers
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true,
+  allowedHeaders: 'Content-Type,Authorization', // Explicitly allow Authorization header
+};
+app.use(cors(corsOptions));
 
-// 2. Body Parser (replaces express.json)
+// Body Parser
 app.use(bodyParser.json({ limit: '10kb' }));
 
-// 3. Data Sanitization
+// Data Sanitization
 app.use(mongoSanitize());
 app.use(xss());
 
-
-// 4. Rate Limiter (should be applied to /api routes)
+// Rate Limiter
 const limiter = rateLimit({
-    max: 5000, // limiti geçici olarak artır
+    max: 500, // Increased limit for development
     windowMs: 60 * 60 * 1000,
     message: 'Too many requests from this IP, please try again in an hour!'
 });
 app.use('/api', limiter);
 
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // --- ROUTES ---
 app.use('/api/v1/auth', authRouter);
@@ -57,8 +55,8 @@ app.use('/api/v1/cart', cartRouter);
 app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
-app.use('/api/v1/wishlist', wishlistRouter);
 app.use('/api/v1/newsletter', newsletterRouter);
+
 
 // Handle undefined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {

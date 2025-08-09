@@ -12,6 +12,7 @@ export interface IProduct extends mongoose.Document {
     isFeatured: boolean;
     averageRating: number;
     numReviews: number;
+    isActive: boolean;
 }
 
 export interface IVariant {
@@ -53,6 +54,10 @@ const productSchema = new Schema<IProduct>(
         isFeatured: {
             type: Boolean,
             default: false,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
         },
         averageRating: {
             type: Number,
