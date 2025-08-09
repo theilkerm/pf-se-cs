@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import User, { IUser } from '../models/user.model.js';
 import AppError from '../utils/appError.js';
+import { createSendToken } from '../utils/token.js';
 
 // Extend Express Request type to include the user property
 interface CustomRequest extends Request {
@@ -93,4 +94,49 @@ export const deleteUser = catchAsync(async (req: Request, res: Response, next: N
         status: 'success',
         data: null
     });
+});
+
+// @desc    Update current logged in user's data (name, email)
+// @route   PATCH /api/v1/users/update-me
+// @access  Private
+export const updateMe = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    // 1) Filter out unwanted fields names that are not allowed to be updated
+    const { firstName, lastName, email } = req.body;
+    const filteredBody: { [key: string]: any } = { firstName, lastName, email };
+
+    // 2) Update user document
+    const updatedUser = await User.findByIdAndUpdate(req.user!.id, filteredBody, {
+        new: true,
+        runValidators: true
+    });
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            user: updatedUser
+        }
+    });
+});
+
+// @desc    Update current logged in user's password
+// @route   PATCH /api/v1/users/update-my-password
+// @access  Private
+export const updateMyPassword = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { currentPassword, password, passwordConfirm } = req.body;
+
+    // 1) Get user from collection
+    const user = await User.findById(req.user!.id).select('+password');
+
+    // 2) Check if POSTed current password is correct
+    if (!user || !(await user.correctPassword(currentPassword, user.password))) {
+        return next(new AppError('Your current password is incorrect', 401));
+    }
+
+    // 3) If so, update password
+    user.password = password;
+    // The pre-save middleware will re-hash the new password
+    await user.save();
+
+    // 4) Log user in, send JWT
+    createSendToken(user, 200, res);
 });

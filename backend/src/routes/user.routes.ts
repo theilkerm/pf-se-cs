@@ -5,7 +5,9 @@ import {
     getAllUsers,
     getUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    updateMe,
+    updateMyPassword
 } from '../controllers/user.controller.js';
 
 const router = Router();
@@ -13,6 +15,8 @@ const router = Router();
 // --- Routes for the logged-in user ---
 router.use(protect); // All routes below this point are protected
 router.get('/me', getMe);
+router.patch('/update-me', updateMe);
+router.patch('/update-my-password', updateMyPassword);
 
 // --- Routes for Admin only ---
 router.use(restrictTo('admin')); // All routes below this point are for admins only

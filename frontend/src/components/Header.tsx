@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Header() {
   const { user, logout, loading } = useAuth();
@@ -19,24 +19,40 @@ export default function Header() {
           <Link href="/" className="hover:text-gray-300">
             Products
           </Link>
-          
+
           {loading ? null : (
             <>
               {user ? (
                 // If user is logged in
                 <>
-                  <Link href="/cart" className="hover:text-gray-300">Cart</Link>
-                  <Link href="/my-orders" className="hover:text-gray-300">My Orders</Link> {/* YENİ LİNK */}
-                  <span className="font-semibold">Welcome, {user.firstName}</span>
-                  <button onClick={logout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-md">
+                  <Link href="/cart" className="hover:text-gray-300">
+                    Cart
+                  </Link>
+                  <Link href="/my-orders" className="hover:text-gray-300">
+                    My Orders
+                  </Link>
+                  <Link href="/account" className="hover:text-gray-300">
+                    My Account
+                  </Link>{" "}
+                  <span className="font-semibold">
+                    Welcome, {user.firstName}
+                  </span>
+                  <button onClick={logout} className="...">
                     Logout
                   </button>
                 </>
               ) : (
                 // If user is not logged in
                 <>
-                  <Link href="/login" className="hover:text-gray-300">Login</Link>
-                  <Link href="/register" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md">Register</Link>
+                  <Link href="/login" className="hover:text-gray-300">
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-md"
+                  >
+                    Register
+                  </Link>
                 </>
               )}
             </>

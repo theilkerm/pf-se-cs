@@ -4,34 +4,12 @@ import User, { IUser } from '../models/user.model.js';
 import AppError from '../utils/appError.js';
 import crypto from 'crypto';
 import sendEmail from '../utils/email.js';
+import { createSendToken } from '../utils/token.js';
 
 // Extend Express Request type to include the user property
 interface CustomRequest extends Request {
   user?: IUser;
 }
-
-const signToken = (id: string) => {
-  // CORRECTED: Added '!' to assert that environment variables exist.
-  return jwt.sign({ id }, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_EXPIRES_IN!,
-  });
-};
-
-const createSendToken = (user: IUser, statusCode: number, res: Response) => {
-  // CORRECTED: Converted user._id (ObjectId) to a string before passing.
-  const token = signToken(user._id.toString());
-
-  // Remove password from output
-  user.password = undefined;
-
-  res.status(statusCode).json({
-    status: 'success',
-    token,
-    data: {
-      user,
-    },
-  });
-};
 
 const catchAsync = (fn: Function) => {
   return (req: Request, res: Response, next: NextFunction) => {
