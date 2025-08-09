@@ -67,3 +67,34 @@ export const approveReview = catchAsync(async (req: Request, res: Response, next
         data: { review }
     });
 });
+
+// @desc    Get all reviews (for admin)
+// @route   GET /api/v1/reviews/admin
+// @access  Private/Admin
+export const getAllReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const reviews = await Review.find().populate('product user');
+    res.status(200).json({
+        status: 'success',
+        results: reviews.length,
+        data: { reviews }
+    });
+});
+
+// @desc    Delete a review
+// @route   DELETE /api/v1/reviews/:id
+// @access  Private/Admin
+export const deleteReview = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const review = await Review.findById(req.params.id);
+
+    if (!review) {
+        return next(new AppError('Review not found', 404));
+    }
+
+    await review.deleteOne();
+
+    res.status(204).json({
+        status: 'success',
+        message: 'Review deleted successfully.'
+    });
+});
+

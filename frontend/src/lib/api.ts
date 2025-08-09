@@ -1,28 +1,59 @@
-import { useAuth } from '@/context/AuthContext'; // mevcutsa
-// Eğer hook kullanmak istemiyorsan global event veya callback enjekte edebilirsin.
+// frontend/src/lib/api.ts
 
-export async function fetcher(endpoint: string, options: RequestInit = {}) {
+function buildUrl(endpoint: string) {
   const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${base}${path}`;
+  return `${base}${path}`;
+}
+
+/**
+ * Plain fetcher — does not mutate localStorage.
+ * Throws Error on non-2xx responses.
+ */
+export async function fetcher(endpoint: string, options: RequestInit = {}) {
+  const url = buildUrl(endpoint);
 
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
-  const headers: HeadersInit = { ...defaultHeaders, ...(options.headers || {}) };
+
+  // If sending FormData, don't force Content-Type
+  const isFormData = options.body instanceof FormData;
+  const headers: HeadersInit = isFormData
+    ? { ...(options.headers || {}) }
+    : { ...defaultHeaders, ...(options.headers || {} as any) };
 
   const res = await fetch(url, { ...options, headers });
+
   if (!res.ok) {
-    // 401 özel ele alınsın
-    if (res.status === 401) {
-      // isteğe göre localStorage temizleyip login'e gönder
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    }
     let msg = `HTTP ${res.status}`;
-    try { msg = (await res.json())?.message || msg; } catch {}
+    try {
+      const data = await res.json();
+      msg = data?.message || msg;
+    } catch { /* ignore */ }
     throw new Error(msg);
   }
-  try { return await res.json(); } catch { return null as any; }
+
+  try {
+    return await res.json();
+  } catch {
+    return null as any;
+  }
+}
+
+/**
+ * Authed fetcher — only adds Authorization header.
+ * Usage: authedFetcher(token, '/admin/things')
+ */
+export async function authedFetcher(
+  token: string,
+  endpoint: string,
+  options: RequestInit = {}
+) {
+  const headers: HeadersInit = {
+    ...(options.headers || {}),
+    Authorization: `Bearer ${token}`,
+  };
+  return fetcher(endpoint, { ...options, headers });
 }
