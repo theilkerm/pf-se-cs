@@ -146,3 +146,45 @@ export const deleteProduct = catchAsync(async (req: Request, res: Response, next
         data: null
     });
 });
+
+
+// @desc    Get related products (same category)
+// @route   GET /api/v1/products/:id/related
+// @access  Public
+export const getRelatedProducts = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+        return next(new AppError('Product not found', 404));
+    }
+
+    const relatedProducts = await Product.find({
+        category: product.category,
+        _id: { $ne: product._id } // Exclude the current product itself
+    }).limit(4); // Show up to 4 related products
+
+    res.status(200).json({
+        status: 'success',
+        results: relatedProducts.length,
+        data: { products: relatedProducts }
+    });
+});
+
+// @desc    Get multiple products by a list of IDs
+// @route   POST /api/v1/products/by-ids
+// @access  Public
+export const getProductsByIds = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids)) {
+        return next(new AppError('Please provide an array of product IDs.', 400));
+    }
+
+    const products = await Product.find({
+        _id: { $in: ids }
+    });
+
+    res.status(200).json({
+        status: 'success',
+        results: products.length,
+        data: { products }
+    });
+});

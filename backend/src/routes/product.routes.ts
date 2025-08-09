@@ -4,7 +4,9 @@ import {
     getAllProducts,
     getProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getRelatedProducts,
+    getProductsByIds
 } from '../controllers/product.controller.js';
 import { protect, restrictTo } from '../controllers/auth.controller.js';
 import multer from 'multer';
@@ -22,6 +24,9 @@ router.route('/')
         createProduct
     );
 
+router.post('/by-ids', getProductsByIds);
+
+router.get('/:id/related', getRelatedProducts);
 // Routes for a specific product by ID
 router.route('/:id')
     .get(getProduct) // Anyone can get a single product

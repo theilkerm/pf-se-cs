@@ -14,63 +14,79 @@ const catchAsync = (fn: Function) => {
 // @access  Private/Admin
 export const getDashboardStats = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
 
-    // Run independent queries in parallel for efficiency
+    const orderCount = await Order.countDocuments();
+    const customerCount = await User.countDocuments({ role: 'customer' });
+
+    // If there are no orders, return early with default/empty stats
+    if (orderCount === 0) {
+        return res.status(200).json({
+            status: 'success',
+            data: {
+                stats: {
+                    totalSales: 0,
+                    orderCount: 0,
+                    customerCount,
+                    recentOrders: [],
+                    orderStatusDistribution: [],
+                    popularProducts: [],
+                    salesTrends: []
+                }
+            }
+        });
+    }
+
+    // If orders exist, proceed with the complex aggregations
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     const [
         totalSalesData,
-        orderCount,
-        customerCount,
         recentOrders,
         orderStatusDistribution,
-        popularProducts
+        popularProducts,
+        salesTrends
     ] = await Promise.all([
-        // 1. Calculate total sales (sum of totalPrice for non-cancelled orders)
         Order.aggregate([
             { $match: { orderStatus: { $ne: 'Cancelled' } } },
             { $group: { _id: null, totalSales: { $sum: '$totalPrice' } } }
         ]),
-        // 2. Count total orders
-        Order.countDocuments(),
-        // 3. Count total customers
-        User.countDocuments({ role: 'customer' }),
-        // 4. Get 5 most recent orders
         Order.find().sort({ createdAt: -1 }).limit(5).populate('user', 'firstName lastName email'),
-        // 5. Get order status distribution
         Order.aggregate([
             { $group: { _id: '$orderStatus', count: { $sum: 1 } } }
         ]),
-        // 6. Get 5 most popular (most sold) products
         Order.aggregate([
-            { $unwind: '$orderItems' }, // Deconstruct the orderItems array
+            { $unwind: '$orderItems' },
             { $group: { 
-                _id: '$orderItems.product', // Group by product ID
+                _id: '$orderItems.product',
                 totalQuantitySold: { $sum: '$orderItems.quantity' } 
             }},
             { $sort: { totalQuantitySold: -1 } },
             { $limit: 5 },
-            { $lookup: { // Join with the products collection to get product details
-                from: 'products',
-                localField: '_id',
-                foreignField: '_id',
-                as: 'productDetails'
-            }},
+            { $lookup: { from: 'products', localField: '_id', foreignField: '_id', as: 'productDetails' }},
             { $unwind: '$productDetails' }
+        ]),
+        Order.aggregate([
+            { $match: { createdAt: { $gte: thirtyDaysAgo }, orderStatus: { $ne: 'Cancelled' } } },
+            { $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                dailySales: { $sum: '$totalPrice' },
+            }},
+            { $sort: { _id: 1 } }
         ])
     ]);
     
-    // Format the response
     const stats = {
         totalSales: totalSalesData.length > 0 ? totalSalesData[0].totalSales : 0,
         orderCount,
         customerCount,
         recentOrders,
         orderStatusDistribution,
-        popularProducts
+        popularProducts,
+        salesTrends
     };
 
     res.status(200).json({
         status: 'success',
-        data: {
-            stats
-        }
+        data: { stats }
     });
 });
