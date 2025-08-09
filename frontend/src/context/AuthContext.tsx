@@ -13,11 +13,15 @@ interface User {
   role: 'customer' | 'admin';
 }
 
+interface LoginPayload { email: string; password: string; }
+interface RegisterPayload { firstName: string; lastName: string; email: string; password: string; }
+
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (data: any) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  login: (data: LoginPayload) => Promise<void>;
+  register: (data: RegisterPayload) => Promise<void>;
   logout: () => void;
   updateUser: (newUser: User) => void;
   loading: boolean;

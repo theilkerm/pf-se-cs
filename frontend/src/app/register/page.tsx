@@ -1,89 +1,48 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
+import { fetcher } from '@/lib/api';
+
+const RegisterSchema = z.object({
+  firstName: z.string().min(1, 'Required'),
+  lastName: z.string().min(1, 'Required'),
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(6, 'Minimum 6 characters'),
+});
+type RegisterForm = z.infer<typeof RegisterSchema>;
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    passwordConfirm: ''
-  });
-  const [error, setError] = useState('');
-  const { register } = useAuth();
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
+    useForm<RegisterForm>({ resolver: zodResolver(RegisterSchema) });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (formData.password !== formData.passwordConfirm) {
-      return setError('Passwords do not match.');
-    }
-
-    try {
-      await register({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-      });
-      // The register function will redirect on success
-    } catch (err: any) {
-        // Zod validation errors can be handled here in the future
-        setError(err.message || 'Registration failed. Please try again.');
-    }
+  const onSubmit = async (data: RegisterForm) => {
+    await fetcher('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+    alert('Registration successful. Please check your inbox to verify your email.');
   };
 
   return (
-    <div className="container mx-auto flex items-center justify-center py-12">
-      <div className="w-full max-w-md">
-        <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
-          {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4 text-center">{error}</p>}
-          
-          <div className="flex space-x-4 mb-4">
-            <div className="w-1/2">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="firstName">First Name</label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3" id="firstName" name="firstName" type="text" required onChange={handleInputChange} />
-            </div>
-            <div className="w-1/2">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="lastName">Last Name</label>
-              <input className="shadow appearance-none border rounded w-full py-2 px-3" id="lastName" name="lastName" type="text" required onChange={handleInputChange} />
-            </div>
-          </div>
+    <main className="max-w-md mx-auto p-6">
+      <h1 className="text-xl font-semibold mb-4">Create account</h1>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <input {...register('firstName')} placeholder="First name" className="w-full border p-2 rounded" />
+        {errors.firstName && <p className="text-red-600 text-sm">{errors.firstName.message}</p>}
+        <input {...register('lastName')} placeholder="Last name" className="w-full border p-2 rounded" />
+        {errors.lastName && <p className="text-red-600 text-sm">{errors.lastName.message}</p>}
+        <input {...register('email')} placeholder="Email" className="w-full border p-2 rounded" />
+        {errors.email && <p className="text-red-600 text-sm">{errors.email.message}</p>}
+        <input type="password" {...register('password')} placeholder="Password" className="w-full border p-2 rounded" />
+        {errors.password && <p className="text-red-600 text-sm">{errors.password.message}</p>}
+        <button disabled={isSubmitting} className="bg-black text-white px-4 py-2 rounded">
+          {isSubmitting ? 'Creating…' : 'Create account'}
+        </button>
+      </form>
 
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">Email</label>
-            <input className="shadow appearance-none border rounded w-full py-2 px-3" id="email" name="email" type="email" required onChange={handleInputChange} />
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">Password</label>
-            <input className="shadow appearance-none border rounded w-full py-2 px-3" id="password" name="password" type="password" required onChange={handleInputChange} />
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="passwordConfirm">Confirm Password</label>
-            <input className="shadow appearance-none border rounded w-full py-2 px-3" id="passwordConfirm" name="passwordConfirm" type="password" required onChange={handleInputChange} />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-              Register
-            </button>
-            <Link href="/login" className="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-              Already have an account?
-            </Link>
-          </div>
-        </form>
+      <div className="mt-4 text-sm">
+        <Link href="/login" className="underline">Already have an account? Sign in</Link>
       </div>
-    </div>
+    </main>
   );
 }

@@ -4,9 +4,10 @@ import bodyParser from 'body-parser';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
+import path from 'path';
 import AppError from './utils/appError.js';
 
-// Import all routers
+// Routers
 import authRouter from './routes/auth.routes.js';
 import userRouter from './routes/user.routes.js';
 import categoryRouter from './routes/category.routes.js';
@@ -20,34 +21,46 @@ import wishlistRouter from './routes/wishlist.routes.js';
 
 const app = express();
 
-// --- GLOBAL MIDDLEWARES ---
-
-// More explicit CORS Configuration to handle preflight requests and Authorization headers
-const corsOptions = {
-  origin: 'http://localhost:3000',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+/* ----------------------------- Security/CORS ----------------------------- */
+app.use(cors({
+  origin: ['http://localhost:3000'],
   credentials: true,
-  allowedHeaders: 'Content-Type,Authorization', // Explicitly allow Authorization header
-};
-app.use(cors(corsOptions));
+}));
 
-// Body Parser
-app.use(bodyParser.json({ limit: '10kb' }));
+// Rate limit (generic). İstersen /auth/login için ayrı limiter ekleyebilirsin.
+const apiLimiter = rateLimit({
+  max: 1000,
+  windowMs: 15 * 60 * 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api', apiLimiter);
 
-// Data Sanitization
+// Body parsers
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Sanitization & XSS
 app.use(mongoSanitize());
 app.use(xss());
 
-// Rate Limiter
-const limiter = rateLimit({
-    max: 500, // Increased limit for development
-    windowMs: 60 * 60 * 1000,
-    message: 'Too many requests from this IP, please try again in an hour!'
-});
-app.use('/api', limiter);
+/* --------------------------- Static file serving -------------------------- */
+/**
+ * Multer dosyaları "public/uploads" altına atıyor.
+ * Aşağıdaki iki mount sayesinde bu dosyalara hem "/public/*"
+ * hem de "/api/v1/public/*" yolu ile erişilebilir.
+ *
+ * Böylece frontend’te:
+ *   `${NEXT_PUBLIC_API_URL}${product.images[0]}`
+ * ve product.images[0] == "/public/uploads/xxx.jpg"
+ * ile istek attığında (NEXT_PUBLIC_API_URL = ".../api/v1")
+ * URL -> ".../api/v1/public/uploads/xxx.jpg" olur ve çalışır.
+ */
+const PUBLIC_DIR = path.join(process.cwd(), 'public');
+app.use('/public', express.static(PUBLIC_DIR));
+app.use('/api/v1/public', express.static(PUBLIC_DIR));
 
-
-// --- ROUTES ---
+/* --------------------------------- Routes -------------------------------- */
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/categories', categoryRouter);
@@ -59,27 +72,23 @@ app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/wishlist', wishlistRouter);
 
+/* --------------------------------- Health -------------------------------- */
+app.get('/api/v1/health', (_req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok' });
+});
 
-// Handle undefined routes
-app.all('*', (req: Request, res: Response, next: NextFunction) => {
+/* ------------------------------ 404 handler ------------------------------ */
+app.all('*', (req: Request, _res: Response, next: NextFunction) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-// Global Error Handling Middleware
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
-  let error = { ...err };
-  error.message = err.message;
-  if (error.code === 11000) {
-    const message = `Duplicate field value entered.`;
-    error = new AppError(message, 400);
-  }
-  res.status(error.statusCode).json({
-    status: error.status,
-    message: error.message,
-    errors: error.errors
-  });
+/* ----------------------------- Global errors ----------------------------- */
+// Basit error handler; projendeki mevcut error middleware’in varsa onu kullan.
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  const statusCode = err.statusCode || 500;
+  const status = err.status || 'error';
+  const message = err.message || 'Something went wrong';
+  res.status(statusCode).json({ status, message });
 });
 
 export default app;
