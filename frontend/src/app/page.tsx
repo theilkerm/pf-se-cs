@@ -67,14 +67,26 @@ const ProductCard = ({ product, viewMode }: { product: IProduct, viewMode: 'grid
   );
 };
 
-// --- NEW NEWSLETTER COMPONENT ---
+// --- NEWSLETTER COMPONENT DEFINITION ---
 const NewsletterSignup = () => {
     const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [loading, setLoading] = useState(false);
     
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        alert(`Thank you for subscribing, ${email}!`);
-        setEmail('');
+        setLoading(true);
+        setMessage('');
+        try {
+            // This is a placeholder for a real API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setMessage(`Thank you for subscribing, ${email}!`);
+            setEmail('');
+        } catch (error: any) {
+            setMessage(error.message || 'An error occurred.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -93,10 +105,11 @@ const NewsletterSignup = () => {
                         required
                         className="flex-grow p-3 border rounded-md"
                     />
-                    <button type="submit" className="bg-gray-800 text-white font-bold py-3 px-6 rounded-md hover:bg-gray-700">
-                        Subscribe
+                    <button type="submit" disabled={loading} className="bg-gray-800 text-white font-bold py-3 px-6 rounded-md hover:bg-gray-700 disabled:bg-gray-500">
+                        {loading ? 'Subscribing...' : 'Subscribe'}
                     </button>
                 </form>
+                {message && <p className="mt-4 text-green-600">{message}</p>}
             </div>
         </section>
     );
@@ -254,7 +267,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- ADDED NEWSLETTER SECTION --- */}
       {!searchTerm && <NewsletterSignup />}
     </main>
   );

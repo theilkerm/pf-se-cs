@@ -18,6 +18,7 @@ import orderRouter from './routes/order.routes.js';
 import reviewRouter from './routes/review.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
 import wishlistRouter from './routes/wishlist.routes.js';
+import newsletterRouter from './routes/newsletter.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,7 +58,7 @@ app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/wishlist', wishlistRouter);
-
+app.use('/api/v1/newsletter', newsletterRouter);
 
 // Handle undefined routes
 app.all('*', (req: Request, res: Response, next: NextFunction) => {
