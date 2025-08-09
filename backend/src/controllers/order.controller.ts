@@ -14,34 +14,31 @@ const catchAsync = (fn: Function) => {
     };
 };
 
-// @desc    Create a new order from cart
-// @route   POST /api/v1/orders
-// @access  Private
 export const createOrder = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
     const { shippingAddress } = req.body;
-    const user = await User.findById(req.user!._id).populate('cart.product');
+    const user = await User.findById(req.user!._id).populate({
+        path: 'cart.product',
+        model: 'Product'
+    });
 
     if (!user || user.cart.length === 0) {
         return next(new AppError('Your cart is empty', 400));
     }
-
     if (!shippingAddress) {
         return next(new AppError('Shipping address is required', 400));
     }
 
-    // 1. Prepare order items and calculate total price
-    const orderItems = user.cart.map(item => ({
-        name: (item.product as any).name,
+    const orderItems = user.cart.map((item: any) => ({
+        name: item.product.name,
         quantity: item.quantity,
         price: item.price,
-        image: (item.product as any).images[0] || '/img/default.jpg',
+        image: item.product.images[0] || '/img/default.jpg',
         product: item.product._id,
         variant: item.variant
     }));
 
     const totalPrice = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
-    // 2. Create the order
     const order = await Order.create({
         user: user._id,
         orderItems,
@@ -49,14 +46,15 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
         totalPrice,
     });
 
-    // 3. Decrement product stock
     for (const item of order.orderItems) {
-        await Product.findByIdAndUpdate(item.product, {
-            $inc: { stock: -item.quantity },
-        });
+        if (item.variant) {
+             await Product.updateOne(
+                { _id: item.product, 'variants.value': item.variant.value, 'variants.type': item.variant.type },
+                { $inc: { 'variants.$.stock': -item.quantity } }
+            );
+        }
     }
 
-    // 4. Clear the user's cart
     user.cart = [];
     await user.save({ validateBeforeSave: false });
 
@@ -68,41 +66,21 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
     });
 });
 
-// @desc    Get logged in user's orders
-// @route   GET /api/v1/orders/my-orders
-// @access  Private
 export const getMyOrders = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    // Find orders and populate the product details within orderItems
-    const orders = await Order.find({ user: req.user!._id })
-        .populate('orderItems.product', 'name price') // Populate product details
-        .sort({ createdAt: -1 });
-
-    res.status(200).json({
-        status: 'success',
-        results: orders.length,
-        data: {
-            orders
-        }
-    });
+    const orders = await Order.find({ user: req.user!._id }).sort({ createdAt: -1 });
+    res.status(200).json({ status: 'success', results: orders.length, data: { orders } });
 });
 
-// @desc    Get a single order by ID
-// @route   GET /api/v1/orders/:id
-// @access  Private
 export const getOrderById = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
     const order = await Order.findById(req.params.id);
 
     if (!order) {
         return next(new AppError('Order not found with that ID', 404));
     }
-
-
-
     if (order.user.toString() !== req.user!._id.toString()) {
         return next(new AppError('Not authorized to view this order', 403));
     }
-
-    // We populate here, after the authorization check
+    
     await order.populate({ path: 'orderItems.product', select: 'name images' });
 
     res.status(200).json({

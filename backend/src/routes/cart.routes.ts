@@ -4,7 +4,6 @@ import { protect } from '../controllers/auth.controller.js';
 
 const router = Router();
 
-// All routes below this will be protected
 router.use(protect);
 
 router.route('/')
@@ -13,7 +12,8 @@ router.route('/')
     .patch(updateItemQuantity)
     .delete(clearCart);
 
-router.route('/:productId')
+// Use a more specific parameter name
+router.route('/:cartItemId')
     .delete(removeItemFromCart);
 
 export default router;

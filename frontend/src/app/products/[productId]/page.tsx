@@ -28,8 +28,8 @@ export default function ProductDetailsPage() {
         const productData = await fetcher(`/products/${productId}`);
         const fetchedProduct = productData.data.product;
         setProduct(fetchedProduct);
-        // Automatically select the first variant when the product loads
-        if (fetchedProduct && fetchedProduct.variants && fetchedProduct.variants.length > 0) {
+        
+        if (fetchedProduct?.variants?.length > 0) {
           setSelectedVariant(fetchedProduct.variants[0]);
         }
       } catch (err) {
@@ -70,23 +70,17 @@ export default function ProductDetailsPage() {
     }
   };
 
-  if (loading) {
-    return <div className="container mx-auto p-8 text-center">Loading...</div>;
+  if (loading || !product) {
+    return <div className="text-center p-10">{loading ? 'Loading...' : 'Product not found!'}</div>;
   }
-  if (!product) {
-    return <div className="container mx-auto p-8 text-center">Product not found!</div>;
-  }
+  
+  const currentStock = selectedVariant ? selectedVariant.stock : product.variants[0]?.stock || 0;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="relative w-full h-96">
-          <Image
-            src={`https://placehold.jp/800x600.png?text=${product.name.replace(/\s/g, "+")}`}
-            alt={product.name}
-            fill
-            className="object-cover rounded-lg shadow-lg"
-          />
+          <Image src={`https://placehold.jp/800x600.png?text=${product.name.replace(/\s/g, "+")}`} alt={product.name} fill className="object-cover rounded-lg shadow-lg" />
         </div>
         <div className="flex flex-col justify-center">
           <span className="text-sm font-semibold text-gray-500 uppercase">{product.category.name}</span>
@@ -94,19 +88,15 @@ export default function ProductDetailsPage() {
           <p className="text-3xl font-light text-gray-800 mb-4">${product.price.toFixed(2)}</p>
           <p className="text-gray-600 leading-relaxed mb-6">{product.description}</p>
           
-          {product.variants && product.variants.length > 0 && (
+          {product.variants && product.variants.length > 1 && ( // Only show if there are multiple options
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-600 mb-2">{product.variants[0].type}</h3>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map((variant, index) => (
+                {product.variants.map((variant) => (
                   <button
-                    key={index}
+                    key={variant._id}
                     onClick={() => setSelectedVariant(variant)}
-                    className={`px-4 py-2 border rounded-md transition-colors ${
-                      selectedVariant?.value === variant.value 
-                        ? 'bg-blue-600 text-white border-blue-600' 
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'
-                    }`}
+                    className={`px-4 py-2 border rounded-md transition-colors ${ selectedVariant?.value === variant.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100'}`}
                   >
                     {variant.value}
                   </button>
@@ -116,8 +106,8 @@ export default function ProductDetailsPage() {
           )}
           
           <div className="flex items-center space-x-4 mb-6">
-            <span className={`py-1 px-3 rounded-full text-white text-sm ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`}>
-              {product.stock > 0 ? `${product.stock} in Stock` : 'Out of Stock'}
+            <span className={`py-1 px-3 rounded-full text-white text-sm ${ currentStock > 0 ? 'bg-green-500' : 'bg-red-500'}`}>
+              {currentStock > 0 ? `${currentStock} in Stock` : 'Out of Stock'}
             </span>
           </div>
           
@@ -127,13 +117,13 @@ export default function ProductDetailsPage() {
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
               min="1"
-              max={product.stock}
+              max={currentStock}
               className="w-20 border border-gray-300 rounded-md text-center py-2"
-              disabled={product.stock === 0}
+              disabled={currentStock === 0}
             />
             <button 
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={currentStock === 0}
               className="flex-grow bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Add to Cart

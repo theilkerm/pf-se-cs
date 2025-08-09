@@ -4,7 +4,7 @@ import { faker } from '@faker-js/faker';
 
 // Import Models
 import User from '../models/user.model.js';
-import Product from '../models/product.model.js';
+import Product, { IVariant } from '../models/product.model.js';
 import Category from '../models/category.model.js';
 
 dotenv.config({ path: './.env' });
@@ -71,18 +71,18 @@ const importData = async () => {
         const products = [];
         for (let i = 0; i < 100; i++) {
             const randomCategory = faker.helpers.arrayElement(createdCategories);
-            let variants = [];
+            let variants: IVariant[] = [];
 
             if (randomCategory.name === 'Clothing') {
                 const sizes = ['S', 'M', 'L', 'XL'];
                 const selectedSizes = faker.helpers.arrayElements(sizes, faker.number.int({ min: 2, max: 4 }));
-                selectedSizes.forEach(size => variants.push({ type: 'Size', value: size }));
-                variants.push({ type: 'Color', value: faker.color.human() });
+                selectedSizes.forEach(size => variants.push({ type: 'Size', value: size, stock: faker.number.int({ min: 5, max: 50 }) }));
+                variants.push({ type: 'Color', value: faker.color.human(), stock: faker.number.int({ min: 5, max: 50 }) });
             } else if (randomCategory.name === 'Electronics') {
                 const colors = ['Black', 'White', 'Silver', 'Space Gray'];
                 const selectedColors = faker.helpers.arrayElements(colors, faker.number.int({ min: 2, max: 3 }));
                 selectedColors.forEach(color => {
-                    variants.push({ type: 'Color', value: color });
+                    variants.push({ type: 'Color', value: color, stock: faker.number.int({ min: 10, max: 100 }) });
                 });
             }
 
@@ -92,8 +92,7 @@ const importData = async () => {
                 price: parseFloat(faker.commerce.price({ min: 10, max: 2000 })),
                 category: randomCategory._id,
                 images: [`/images/product-${i+1}.jpg`],
-                stock: faker.number.int({ min: 0, max: 200 }),
-                variants: variants
+                variants: variants.length > 0 ? variants : [{ type: 'Default', value: 'Standard', stock: faker.number.int({ min: 0, max: 200 }) }]
             });
         }
         await Product.insertMany(products);

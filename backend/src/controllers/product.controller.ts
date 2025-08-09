@@ -54,26 +54,20 @@ export const getAllProducts = catchAsync(async (req: Request, res: Response, nex
 // @route   POST /api/v1/products
 // @access  Private/Admin
 export const createProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // In a real app, you would process req.files here, upload them to a cloud service (like AWS S3),
-    // and get back the URLs to store in the database.
-    // For now, we'll just log them to show they are received.
-    console.log(req.files); 
-
-    // We will manually add some dummy image URLs.
     const productData = { ...req.body };
+    
+    // Variants are sent as a JSON string from FormData, parse them
+    if (productData.variants) {
+        productData.variants = JSON.parse(productData.variants);
+    }
+
+    // Image handling remains the same
     if (req.files) {
-        // Dummy URL logic
-        productData.images = ['/img/dummy-product-1.jpg', '/img/dummy-product-2.jpg'];
+        productData.images = ['/img/dummy-product-1.jpg']; // Placeholder for now
     }
 
     const newProduct = await Product.create(productData);
-    
-    res.status(201).json({
-        status: 'success',
-        data: {
-            product: newProduct
-        }
-    });
+    res.status(201).json({ status: 'success', data: { product: newProduct } });
 });
 
 // @desc    Get a single product by ID
@@ -103,21 +97,25 @@ export const getProduct = catchAsync(async (req: Request, res: Response, next: N
 // @route   PATCH /api/v1/products/:id
 // @access  Private/Admin
 export const updateProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-        new: true, // Return the updated document
-        runValidators: true // Run schema validators
+    const updateData = { ...req.body };
+
+    // Parse variants if they are sent as a string
+    if (updateData.variants) {
+        updateData.variants = JSON.parse(updateData.variants);
+    }
+    
+    // In a real app, you would handle new image uploads here and add to the images array
+
+    const product = await Product.findByIdAndUpdate(req.params.id, updateData, {
+        new: true,
+        runValidators: true
     });
 
     if (!product) {
         return next(new AppError('No product found with that ID', 404));
     }
 
-    res.status(200).json({
-        status: 'success',
-        data: {
-            product
-        }
-    });
+    res.status(200).json({ status: 'success', data: { product } });
 });
 
 // @desc    Delete a product

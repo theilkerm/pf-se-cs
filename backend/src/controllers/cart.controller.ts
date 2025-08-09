@@ -15,9 +15,6 @@ const catchAsync = (fn: Function) => {
 
 // --- Helper Functions (Not Exported) ---
 
-/**
- * Finds a user by their ID or throws a 404 error.
- */
 const findUserById = async (userId: string) => {
   const user = await User.findById(userId);
   if (!user) {
@@ -26,11 +23,6 @@ const findUserById = async (userId: string) => {
   return user;
 };
 
-
-
-/**
- * Finds a product by its ID or throws a 404 error.
- */
 const findProductById = async (productId: string) => {
   const product = await Product.findById(productId);
   if (!product) {
@@ -39,29 +31,27 @@ const findProductById = async (productId: string) => {
   return product;
 };
 
-/**
- * Checks if there is enough stock for the requested product.
- */
-const checkStockAvailability = (product: any, user: any, requestedQuantity: number) => {
-  const itemIndex = user.cart.findIndex((item: any) => item.product.toString() === product._id.toString());
+const checkStockAvailability = (product: any, user: any, requestedQuantity: number, variant: any) => {
+  const itemIndex = user.cart.findIndex((item: any) => 
+    item.product.toString() === product._id.toString() &&
+    item.variant?.value === variant.value &&
+    item.variant?.type === variant.type
+  );
   const quantityInCart = itemIndex > -1 ? user.cart[itemIndex].quantity : 0;
   const totalQuantity = quantityInCart + requestedQuantity;
+  const productVariant = product.variants.find((v: any) => v.value === variant.value && v.type === variant.type);
 
-  if (product.stock < totalQuantity) {
-    throw new AppError(`Insufficient stock. Only ${product.stock} items available.`, 400);
+  if (!productVariant || productVariant.stock < totalQuantity) {
+    throw new AppError(`Insufficient stock for the selected variant. Only ${productVariant?.stock || 0} items available.`, 400);
   }
-
   return { itemIndex, totalQuantity };
 };
 
-/**
- * Updates the user's cart array and saves the document.
- */
 const updateUserCart = (user: any, product: any, quantity: number, itemIndex: number, totalQuantity: number, variant: any) => {
   if (itemIndex > -1) {
     user.cart[itemIndex].quantity = totalQuantity;
   } else {
-    user.cart.push({ product: product._id, quantity, price: product.price, variant }); // variant'ı ekle
+    user.cart.push({ product: product._id, quantity, price: product.price, variant });
   }
   return user.save({ validateBeforeSave: false });
 };
@@ -72,72 +62,74 @@ const updateUserCart = (user: any, product: any, quantity: number, itemIndex: nu
 export const getCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
   const user = await User.findById(req.user!._id).populate({
     path: 'cart.product',
-    select: 'name images price'
+    select: 'name images price stock variants'
   });
   if (!user) { return next(new AppError('User not found', 404)); }
   res.status(200).json({ status: 'success', data: { cart: user.cart } });
 });
 
 export const addItemToCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const { productId, quantity, variant } = req.body; // variant'ı body'den al
-
+    const { productId, quantity, variant } = req.body;
+    if (!variant || !variant.type || !variant.value) { return next(new AppError('Please select a product variant.', 400)); }
+    
     const user = await findUserById(req.user!._id);
     const product = await findProductById(productId);
-
-    // Find item with the same product ID AND the same variant
-    const itemIndex = user.cart.findIndex(item => 
-        item.product.toString() === productId && 
-        item.variant?.type === variant?.type && 
-        item.variant?.value === variant?.value
-    );
-
-    const { totalQuantity } = checkStockAvailability(product, user, quantity, itemIndex);
-
-    // Pass the variant to the update function
+    const { itemIndex, totalQuantity } = checkStockAvailability(product, user, quantity, variant);
+    
     await updateUserCart(user, product, quantity, itemIndex, totalQuantity, variant);
-
-    await user.populate({ path: 'cart.product', select: 'name images price' });
+    
+    await user.populate({ path: 'cart.product', select: 'name images price variants' });
     res.status(200).json({ status: 'success', message: 'Item added to cart', data: { cart: user.cart } });
 });
 
-export const removeItemFromCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const { productId } = req.params;
-  const user = await findUserById(req.user!._id);
-  user.cart = user.cart.filter(item => item.product.toString() !== productId);
-  await user.save({ validateBeforeSave: false });
-  res.status(204).json({ status: 'success', data: null });
+export const updateItemQuantity = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const { productId, quantity, variant } = req.body;
+    if (!variant) { return next(new AppError('Variant information is missing.', 400)); }
+    
+    const user = await findUserById(req.user!._id);
+    
+    const itemIndex = user.cart.findIndex((item: any) => 
+        item.product.toString() === productId &&
+        item.variant?.value === variant.value &&
+        item.variant?.type === variant.type
+    );
+
+    if (itemIndex > -1) {
+        const product = await findProductById(productId);
+        const productVariant = product.variants.find((v: any) => v.value === variant.value && v.type === variant.type);
+
+        if (!productVariant || productVariant.stock < quantity) {
+            return next(new AppError('Insufficient stock for this variant.', 400));
+        }
+        
+        user.cart[itemIndex].quantity = quantity;
+    } else {
+        return next(new AppError('Product with specified variant not found in cart.', 404));
+    }
+
+    await user.save({ validateBeforeSave: false });
+    await user.populate({ path: 'cart.product', select: 'name images price stock variants' });
+
+    res.status(200).json({ status: 'success', data: { cart: user.cart } });
 });
 
-export const updateItemQuantity = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+export const removeItemFromCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    // Note: To remove a specific variant of a product, we should use the unique cart item _id.
+    // The frontend should send this _id. For now, this is a placeholder.
+    // Let's assume frontend sends productId and variant info to identify the item.
+    // A better approach is to use the cart item's own unique _id.
+    const { cartItemId } = req.params;
+    const user = await findUserById(req.user!._id);
 
-  const { productId, quantity } = req.body;
-  const user = await User.findById(req.user!._id);
-  if (!user) { return next(new AppError('User not found', 404)); }
+    user.cart = user.cart.filter((item: any) => item._id.toString() !== cartItemId);
+    await user.save({ validateBeforeSave: false });
 
-  const itemIndex = user.cart.findIndex(item => item.product.toString() === productId);
-
-  if (itemIndex > -1) {
-    const product = await Product.findById(productId);
-    if (!product) { return next(new AppError('Product not found in DB', 404)); }
-    if (product.stock < quantity) { return next(new AppError('Insufficient stock', 400)); }
-
-    user.cart[itemIndex].quantity = quantity;
-  } else {
-    return next(new AppError('Product not found in cart', 404));
-  }
-
-  await user.save({ validateBeforeSave: false });
-  await user.populate({ path: 'cart.product', select: 'name images price stock' });
-
-  res.status(200).json({ status: 'success', data: { cart: user.cart } });
+    res.status(204).json({ status: 'success', data: null });
 });
 
 export const clearCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-  const user = await User.findById(req.user!._id);
-  if (!user) { return next(new AppError('User not found', 404)); }
-
-  user.cart = [];
-  await user.save({ validateBeforeSave: false });
-
-  res.status(204).json({ status: 'success', data: null });
+    const user = await findUserById(req.user!._id);
+    user.cart = [];
+    await user.save({ validateBeforeSave: false });
+    res.status(204).json({ status: 'success', data: null });
 });

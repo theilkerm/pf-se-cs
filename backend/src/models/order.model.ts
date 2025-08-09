@@ -1,13 +1,16 @@
 import mongoose from 'mongoose';
+import { IVariant } from './product.model.js';
+
 const { model, models, Schema } = mongoose;
 
-// This interface defines the structure for a single item within an order
+// This interface now correctly includes the optional variant property
 export interface IOrderItem {
     name: string;
     quantity: number;
     price: number;
     image: string;
     product: mongoose.Types.ObjectId;
+    variant?: IVariant;
 }
 
 export interface IOrder extends mongoose.Document {
@@ -46,7 +49,8 @@ const orderSchema = new Schema<IOrder>(
                 },
                 variant: {
                     type: { type: String },
-                    value: { type: String }
+                    value: { type: String },
+                    stock: { type: Number }
                 }
             },
         ],

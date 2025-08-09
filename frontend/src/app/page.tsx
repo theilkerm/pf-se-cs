@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { fetcher } from "@/lib/api";
 import { IProduct, ICategory } from "@/types";
 import Image from "next/image";
 import Link from "next/link";
 
-// A separate component for the product card for better readability
 const ProductCard = ({ product }: { product: IProduct }) => (
   <Link href={`/products/${product._id}`} className="group">
     <div className="border rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
@@ -49,7 +48,6 @@ export default function HomePage() {
     getCategories();
   }, []);
 
-  // Renamed from useEffect to be clearer, but it's still a hook
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -68,18 +66,17 @@ export default function HomePage() {
       }
     };
     getProducts();
-  }, [searchParams]);
+  }, [searchParams]); // This hook re-runs whenever the URL search parameters change
 
   const handleFilterChange = (key: string, value: string) => {
     const current = new URLSearchParams(searchParams.toString());
-    if (!value) {
-      current.delete(key);
-    } else {
-      current.set(key, value);
+    current.set(key, value);
+    if (key !== 'page') {
+      current.set('page', '1');
     }
-    current.set('page', '1');
     const search = current.toString();
     const query = search ? `?${search}` : "";
+    // Using router.push will update the URL, which triggers the useEffect above
     router.push(`${pathname}${query}`);
   };
   
@@ -97,7 +94,6 @@ export default function HomePage() {
         </select>
       </div>
 
-      {/* RENDER LOGIC CORRECTED HERE */}
       {loading ? (
         <p className="text-center">Loading products...</p>
       ) : products.length > 0 ? (

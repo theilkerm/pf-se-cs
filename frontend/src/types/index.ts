@@ -6,6 +6,8 @@ export interface ICategory {
 export interface Variant {
   type: string;
   value: string;
+  stock: number;
+  _id: string;
 }
 
 export interface IProduct {
@@ -15,7 +17,6 @@ export interface IProduct {
   price: number;
   images: string[];
   category: ICategory;
-  stock: number;
   variants: Variant[];
   averageRating: number;
   numReviews: number;
@@ -30,4 +31,22 @@ export interface IReview {
     lastName: string;
   };
   createdAt: string;
+}
+
+// These are new/updated interfaces for Cart and Order items
+export interface CartItem {
+  product: IProduct;
+  quantity: number;
+  price: number;
+  variant?: Variant; // Variant is now part of the cart item
+  _id: string;
+}
+
+export interface OrderItem {
+    name: string;
+    quantity: number;
+    price: number;
+    image: string;
+    product: string;
+    variant?: Variant; // And also part of the order item
 }

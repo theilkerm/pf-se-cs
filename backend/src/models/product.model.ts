@@ -7,15 +7,17 @@ export interface IProduct extends mongoose.Document {
     price: number;
     category: mongoose.Types.ObjectId; // Reference to the Category model
     images: string[];
-    stock: number;
-    variants: {
-        type: string; // e.g., 'Color' or 'Size'
-        value: string; // e.g., 'Red' or 'XL'
-    }[];
+    variants: IVariant[];
     tags: string[];
     isFeatured: boolean;
     averageRating: number;
     numReviews: number;
+}
+
+export interface IVariant {
+    type: string;
+    value: string;
+    stock: number; // Stock is now per-variant
 }
 
 const productSchema = new Schema<IProduct>(
@@ -40,15 +42,11 @@ const productSchema = new Schema<IProduct>(
             required: [true, 'Product must belong to a category'],
         },
         images: [String],
-        stock: {
-            type: Number,
-            required: [true, 'Product stock quantity is required'],
-            default: 0,
-        },
         variants: [
             {
-                type: { type: String },
-                value: { type: String },
+                type: { type: String, required: true },
+                value: { type: String, required: true },
+                stock: { type: Number, required: true, min: 0, default: 0 },
             },
         ],
         tags: [String],
