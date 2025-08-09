@@ -91,7 +91,7 @@ const importData = async () => {
                 description: faker.commerce.productDescription(),
                 price: parseFloat(faker.commerce.price({ min: 10, max: 2000 })),
                 category: randomCategory._id,
-                images: [`/images/product-${i+1}.jpg`],
+                images: [`/uploads/placeholder.jpg`],
                 variants: variants.length > 0 ? variants : [{ type: 'Default', value: 'Standard', stock: faker.number.int({ min: 0, max: 200 }) }]
             });
         }

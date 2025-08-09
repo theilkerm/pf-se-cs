@@ -5,6 +5,8 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import AppError from './utils/appError.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import all routers
 import authRouter from './routes/auth.routes.js';
@@ -15,6 +17,9 @@ import cartRouter from './routes/cart.routes.js';
 import orderRouter from './routes/order.routes.js';
 import reviewRouter from './routes/review.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -30,6 +35,7 @@ app.use(bodyParser.json({ limit: '10kb' }));
 app.use(mongoSanitize());
 app.use(xss());
 
+
 // 4. Rate Limiter (should be applied to /api routes)
 const limiter = rateLimit({
     max: 5000, // limiti geçici olarak artır
@@ -38,6 +44,7 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
 // --- ROUTES ---
 app.use('/api/v1/auth', authRouter);

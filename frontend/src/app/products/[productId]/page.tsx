@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -17,6 +17,8 @@ export default function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [imageSrc, setImageSrc] = useState(''); // State to manage the image source for fallback
+
   const { user, token } = useAuth(); 
   const router = useRouter(); 
 
@@ -29,8 +31,16 @@ export default function ProductDetailsPage() {
         const fetchedProduct = productData.data.product;
         setProduct(fetchedProduct);
         
-        if (fetchedProduct?.variants?.length > 0) {
-          setSelectedVariant(fetchedProduct.variants[0]);
+        // Set initial image and variant
+        if (fetchedProduct) {
+          const initialImg = fetchedProduct.images?.[0]
+            ? `${process.env.NEXT_PUBLIC_API_URL}${fetchedProduct.images[0]}`.replace('/api/v1', '')
+            : `https://placehold.jp/800x600.png?text=${encodeURIComponent(fetchedProduct.name)}`;
+          setImageSrc(initialImg);
+
+          if (fetchedProduct.variants?.length > 0) {
+            setSelectedVariant(fetchedProduct.variants[0]);
+          }
         }
       } catch (err) {
         console.error("Fetch product error:", err);
@@ -70,17 +80,27 @@ export default function ProductDetailsPage() {
     }
   };
 
-  if (loading || !product) {
-    return <div className="text-center p-10">{loading ? 'Loading...' : 'Product not found!'}</div>;
+  if (loading) {
+    return <div className="container mx-auto p-8 text-center">Loading product...</div>;
+  }
+  if (!product) {
+    return <div className="container mx-auto p-8 text-center">Product not found!</div>;
   }
   
-  const currentStock = selectedVariant ? selectedVariant.stock : product.variants[0]?.stock || 0;
+  const currentStock = selectedVariant ? selectedVariant.stock : (product.variants[0]?.stock || 0);
+  const placeholderUrl = `https://placehold.jp/800x600.png?text=${encodeURIComponent(product.name)}`;
 
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="relative w-full h-96">
-          <Image src={`https://placehold.jp/800x600.png?text=${product.name.replace(/\s/g, "+")}`} alt={product.name} fill className="object-cover rounded-lg shadow-lg" />
+          <Image
+            src={imageSrc}
+            alt={product.name}
+            fill
+            className="object-cover rounded-lg shadow-lg"
+            onError={() => setImageSrc(placeholderUrl)}
+          />
         </div>
         <div className="flex flex-col justify-center">
           <span className="text-sm font-semibold text-gray-500 uppercase">{product.category.name}</span>
@@ -88,7 +108,7 @@ export default function ProductDetailsPage() {
           <p className="text-3xl font-light text-gray-800 mb-4">${product.price.toFixed(2)}</p>
           <p className="text-gray-600 leading-relaxed mb-6">{product.description}</p>
           
-          {product.variants && product.variants.length > 1 && ( // Only show if there are multiple options
+          {product.variants && product.variants.length > 0 && product.variants.some(v => v.type !== 'Default') && (
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-600 mb-2">{product.variants[0].type}</h3>
               <div className="flex flex-wrap gap-2">

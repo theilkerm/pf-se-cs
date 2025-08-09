@@ -9,6 +9,7 @@ services:
     volumes:
       # Mount the src folder for hot-reloading
       - ./backend/src:/app/src
+      - uploads-data:/app/public/uploads
     env_file:
       - ./backend/.env
     environment:
@@ -39,3 +40,4 @@ networks:
 # Define the volume for MongoDB data persistence
 volumes:
   mongo-data:
+  uploads-data:

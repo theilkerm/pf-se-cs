@@ -56,14 +56,14 @@ export const getAllProducts = catchAsync(async (req: Request, res: Response, nex
 export const createProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const productData = { ...req.body };
     
-    // Variants are sent as a JSON string from FormData, parse them
     if (productData.variants) {
         productData.variants = JSON.parse(productData.variants);
     }
 
-    // Image handling remains the same
-    if (req.files) {
-        productData.images = ['/img/dummy-product-1.jpg']; // Placeholder for now
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+        // req.files'dan gelen her dosyanın yolunu alıp, frontend'in
+        // erişebileceği bir URL'e dönüştürüyoruz.
+        productData.images = req.files.map((file: any) => `/uploads/${file.filename}`);
     }
 
     const newProduct = await Product.create(productData);

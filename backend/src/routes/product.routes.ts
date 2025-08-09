@@ -8,8 +8,8 @@ import {
 } from '../controllers/product.controller.js';
 import { protect, restrictTo } from '../controllers/auth.controller.js';
 import multer from 'multer';
+import { upload } from '../config/multer.js'; // YENİ İMPORT YOLU
 
-const upload = multer({ storage: multer.memoryStorage() });
 const router = Router();
 
 // Routes for getting all products and creating a new one
@@ -18,7 +18,7 @@ router.route('/')
     .post(
         protect,
         restrictTo('admin'),
-        upload.array('images', 5),
+        upload.array('images', 5), // 'images' alanı, en fazla 5 dosya
         createProduct
     );
 

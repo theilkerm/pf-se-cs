@@ -8,8 +8,9 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'placehold.jp', // Bu yeni kuralı ekleyin
+        hostname: 'placehold.jp',
       },
+      { protocol: 'http', hostname: 'localhost', port: '3001' },
     ],
   },
 };

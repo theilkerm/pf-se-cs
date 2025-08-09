@@ -22,3 +22,6 @@ pnpm-debug.log*
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# backend public uploads
+/uploads
