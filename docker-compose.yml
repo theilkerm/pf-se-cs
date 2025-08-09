@@ -21,6 +21,22 @@ services:
     networks:
       - ecom-network
 
+  # Frontend Service (Next.js)
+  frontend:
+    build: ./frontend
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+    depends_on:
+      - backend
+    networks:
+      - ecom-network
+
   # MongoDB Service
   mongo:
     image: mongo:latest

@@ -5,6 +5,9 @@ import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
 import { IProduct } from '@/types';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface CartItem {
     product: IProduct;
@@ -12,6 +15,18 @@ interface CartItem {
     price: number;
     _id: string;
 }
+
+const AddressSchema = z.object({
+  street: z.string().min(1, 'Required'),
+  city: z.string().min(1, 'Required'),
+  state: z.string().min(1, 'Required'),
+  zipCode: z.string().min(3, 'Invalid zip'),
+  country: z.string().min(1, 'Required'),
+});
+type AddressForm = z.infer<typeof AddressSchema>;
+
+const { register, handleSubmit, formState: { errors, isSubmitting } } =
+  useForm<AddressForm>({ resolver: zodResolver(AddressSchema) });
 
 export default function CheckoutPage() {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);

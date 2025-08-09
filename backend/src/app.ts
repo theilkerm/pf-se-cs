@@ -16,6 +16,7 @@ import orderRouter from './routes/order.routes.js';
 import reviewRouter from './routes/review.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
 import newsletterRouter from './routes/newsletter.routes.js';
+import wishlistRouter from './routes/wishlist.routes.js';
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/v1/orders', orderRouter);
 app.use('/api/v1/reviews', reviewRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/newsletter', newsletterRouter);
+app.use('/api/v1/wishlist', wishlistRouter);
 
 
 // Handle undefined routes
