@@ -72,6 +72,17 @@ const productSchema = new Schema<IProduct>(
     }
 );
 
+// Virtual populate for reviews on a product
+productSchema.virtual('reviews', {
+    ref: 'Review',
+    foreignField: 'product',
+    localField: '_id'
+});
+
+// To include virtuals in res.json(), you need to set this
+productSchema.set('toJSON', { virtuals: true });
+productSchema.set('toObject', { virtuals: true });
+
 const Product: mongoose.Model<IProduct> =
     models.Product || model<IProduct>('Product', productSchema);
 

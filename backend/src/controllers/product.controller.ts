@@ -57,7 +57,12 @@ export const createProduct = catchAsync(async (req: Request, res: Response, next
 // @route   GET /api/v1/products/:id
 // @access  Public
 export const getProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const product = await Product.findById(req.params.id).populate('category');
+    const product = await Product.findById(req.params.id)
+        .populate('category')
+        .populate({ 
+            path: 'reviews',
+            match: { isApproved: true }
+        });
 
     if (!product) {
         return next(new AppError('No product found with that ID', 404));
