@@ -56,7 +56,7 @@ The frontend application follows a structured and scalable architecture based on
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Authentication routes (login, register, etc.)
+│   ├── account/           # User account management
 │   ├── admin/             # Admin panel routes
 │   │   ├── categories/    # Category management
 │   │   ├── customers/     # Customer management
@@ -65,11 +65,16 @@ src/
 │   │   ├── orders/        # Order management
 │   │   ├── products/      # Product management
 │   │   └── reviews/       # Review management
-│   ├── account/           # User account management
 │   ├── cart/              # Shopping cart
 │   ├── checkout/          # Checkout process
+│   ├── forgot-password/   # Password reset request
+│   ├── login/             # User login
 │   ├── my-orders/         # User order history
+│   ├── orders/            # Order details
 │   ├── products/          # Product browsing and details
+│   ├── register/          # User registration
+│   ├── reset-password/    # Password reset
+│   ├── verify-email/      # Email verification
 │   └── wishlist/          # User wishlist
 ├── components/             # Reusable UI components
 │   ├── Header.tsx         # Main navigation bar
@@ -207,12 +212,12 @@ interface IProduct {
   name: string;
   description: string;
   price: number;
-  category: string;
+  category: ICategory;
   images: string[];
   variants: Variant[];
-  tags: string[];
-  isFeatured: boolean;
-  stock: number;
+  averageRating: number;
+  numReviews: number;
+  isActive: boolean;
 }
 
 interface Variant {
@@ -255,6 +260,7 @@ interface SalesData {
 - Global state for user information
 - JWT token management
 - Login/logout functionality
+- Wishlist management
 
 ### Local State
 - Component-level state with `useState`
@@ -264,8 +270,7 @@ interface SalesData {
 ## 11. API Integration
 
 ### Centralized API Functions
-- **`fetcher`**: Public API calls
-- **`authedFetcher`**: Authenticated API calls with JWT
+- **`fetcher`**: Centralized API calls with error handling
 - Consistent error handling
 - Type-safe responses
 

@@ -6,9 +6,9 @@ A modern, full-featured e-commerce platform built with Next.js (React) and Node.
 
 ### Customer Interface
 - **User Management**: JWT-based secure user registration, login, email verification, and password reset
-- **Product Discovery**: Advanced filtering by category and price, real-time search functionality
+- **Product Discovery**: Advanced filtering by category and price, search functionality with URL-based state management
 - **Detailed Product Pages**: Multiple product images, variants (color, size), stock status, and user reviews
-- **Shopping Cart**: Add, remove, and update product quantities with real-time updates
+- **Shopping Cart**: Add, remove, and update product quantities with debounced updates
 - **Order Process**: Streamlined checkout with saved address book integration
 - **User Dashboard**: Profile management, address book, and order history tracking
 - **Wishlist**: Save favorite products for future purchases
@@ -42,7 +42,7 @@ The easiest way to run the entire project (frontend, backend, database) is using
 
 1. **Clone the Repository**
    ```bash
-   git clone <your-repository-url>
+   git clone https://github.com/theilkerm/pf-se-cs/
    cd pf-se-cs
    ```
 
@@ -178,7 +178,7 @@ For more detailed information about each component:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 

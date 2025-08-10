@@ -87,7 +87,7 @@ Now, open the `.env` file and fill in the required values.
 # Application Configuration
 NODE_ENV=development
 PORT=3001
-MONGO_URI=mongodb://mongodb:27017/e-commerce-db
+MONGO_URI=mongodb://mongo:27017/e-commerce-db
 FRONTEND_URL=http://localhost:3000
 
 # JWT Secrets
@@ -102,7 +102,7 @@ EMAIL_PASSWORD=your_mailtrap_password
 EMAIL_FROM=My E-Commerce <noreply@ecommerce.com>
 ```
 
-**Note:** For the `MONGO_URI`, `mongodb` is the name of the service defined in `docker-compose.yml`. If you are not using Docker, replace it with `localhost` or your MongoDB host address.
+**Note:** For the `MONGO_URI`, `mongo` is the name of the service defined in `docker-compose.yml`. If you are not using Docker, replace it with `localhost` or your MongoDB host address.
 
 ### Step 3: Run the Application
 
@@ -162,6 +162,9 @@ The base URL for all API routes is `/api/v1`.
 | `PATCH`| `/me/addresses/:addressId`  | Update an existing address.                  | Private |
 | `DELETE`| `/me/addresses/:addressId`  | Delete an address.                           | Private |
 | `GET`  | `/`                         | Get a list of all users.                     | Admin   |
+| `GET`  | `/:id`                      | Get a specific user by ID.                   | Admin   |
+| `PATCH`| `/:id`                      | Update a user (admin only).                  | Admin   |
+| `DELETE`| `/:id`                      | Delete a user (admin only).                  | Admin   |
 
 ### Products (`/products`)
 
@@ -191,8 +194,9 @@ The base URL for all API routes is `/api/v1`.
 | :----- | :-------------------------- | :------------------------------------------- | :------ |
 | `GET`  | `/`                         | Get the contents of the user's cart.         | Private |
 | `POST` | `/`                         | Add an item to the cart.                     | Private |
-| `PATCH`| `/:itemId`                  | Update the quantity of an item in the cart.  | Private |
-| `DELETE`| `/:itemId`                  | Remove an item from the cart.                | Private |
+| `PATCH`| `/`                         | Update the quantity of an item in the cart.  | Private |
+| `DELETE`| `/:cartItemId`              | Remove an item from the cart.                | Private |
+| `DELETE`| `/`                         | Clear the entire cart.                       | Private |
 
 ### Orders (`/orders`)
 
@@ -216,9 +220,8 @@ The base URL for all API routes is `/api/v1`.
 
 | Method | Endpoint                    | Description                                  | Access  |
 | :----- | :-------------------------- | :------------------------------------------- | :------ |
-| `POST` | `/subscribe`                | Subscribe to the newsletter.                 | Public  |
-| `GET`  | `/subscribers`               | Get all newsletter subscribers.              | Admin   |
-| `DELETE`| `/subscribers/:id`           | Remove a subscriber.                         | Admin   |
+| `POST` | `/`                         | Subscribe to the newsletter.                 | Public  |
+| `GET`  | `/`                         | Get all newsletter subscribers.              | Admin   |
 
 ### Dashboard (`/dashboard`)
 
@@ -232,14 +235,40 @@ The base URL for all API routes is `/api/v1`.
 ```typescript
 interface User {
   _id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   role: 'customer' | 'admin';
-  isEmailVerified: boolean;
+  phone?: string;
   addresses: Address[];
+  favoriteCategories: string[];
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  cart: CartItem[];
+  wishlist: string[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface Address {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface CartItem {
+  product: string;
+  quantity: number;
+  price: number;
+  variant: {
+    type: string;
+    value: string;
+  };
 }
 ```
 
@@ -255,9 +284,17 @@ interface Product {
   variants: Variant[];
   tags: string[];
   isFeatured: boolean;
-  stock: number;
+  isActive: boolean;
+  averageRating: number;
+  numReviews: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface Variant {
+  type: string;
+  value: string;
+  stock: number;
 }
 ```
 
@@ -267,8 +304,8 @@ interface Order {
   _id: string;
   user: string;
   items: OrderItem[];
-  totalAmount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  totalPrice: number;
+  orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   shippingAddress: Address;
   createdAt: Date;
   updatedAt: Date;
@@ -302,12 +339,11 @@ Common HTTP status codes:
 # Run all tests
 npm test
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage
-npm run test:coverage
+# Run tests in watch mode (automatically restarts on file changes)
+npm test
 ```
+
+**Note:** The test script automatically runs in watch mode with `--watchAll` flag.
 
 ### Test Structure
 - **Unit Tests**: Individual function and middleware testing
@@ -318,14 +354,12 @@ npm run test:coverage
 
 ```bash
 # Development
-npm run dev          # Start development server with nodemon
+npm run dev          # Start development server with tsx watch
 npm run build        # Build TypeScript to JavaScript
 npm start            # Start production server
 
 # Testing
-npm test             # Run tests
-npm run test:watch   # Run tests in watch mode
-npm run test:coverage # Run tests with coverage
+npm test             # Run tests in watch mode
 
 # Database
 npm run seed:import  # Import sample data
@@ -356,8 +390,8 @@ docker-compose down
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `NODE_ENV` | Application environment | `development` |
-| `PORT` | Server port | `5000` |
-| `MONGO_URI` | MongoDB connection string | `mongodb://localhost:27017/e-commerce-db` |
+| `PORT` | Server port | `3001` |
+| `MONGO_URI` | MongoDB connection string | `mongodb://mongo:27017/e-commerce-db` (Docker) |
 | `JWT_SECRET` | JWT signing secret | Required |
 | `JWT_EXPIRES_IN` | JWT expiration time | `90d` |
 | `EMAIL_HOST` | SMTP host | Required |
