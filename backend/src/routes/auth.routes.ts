@@ -5,6 +5,11 @@ import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema 
 
 const router = Router();
 
+// Handle OPTIONS requests for CORS preflight
+router.options('*', (req, res) => {
+  res.status(204).end();
+});
+
 router.post('/register', validate(registerSchema), register);
 router.post('/login', validate(loginSchema), login);
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
