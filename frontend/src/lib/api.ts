@@ -3,6 +3,12 @@
 function buildUrl(endpoint: string) {
   const base = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  
+  // Automatically prepend /api/v1 if not already present
+  if (!path.startsWith('/api/v1')) {
+    return `${base}/api/v1${path}`;
+  }
+  
   return `${base}${path}`;
 }
 

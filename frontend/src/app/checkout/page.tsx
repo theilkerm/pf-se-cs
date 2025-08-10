@@ -46,7 +46,7 @@ export default function CheckoutPage() {
     const getCart = async () => {
       if (!token) return;
       try {
-        const data = await fetcher('/cart', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await fetcher('/api/v1/cart', { headers: { Authorization: `Bearer ${token}` } });
         if (data.data.cart.length === 0) {
             alert("Your cart is empty. Redirecting to homepage.");
             router.push('/');
@@ -79,7 +79,7 @@ export default function CheckoutPage() {
     }
     
     try {
-      const response = await fetcher('/orders', {
+              const response = await fetcher('/api/v1/orders', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ shippingAddress: data })
