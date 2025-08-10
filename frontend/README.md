@@ -116,7 +116,7 @@ Create a `.env.local` file in the `frontend` directory. This file will contain t
 
 ```dotenv
 # .env.local
-NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
 This URL must match the address where your backend API is accessible. The default is set for the Docker environment.

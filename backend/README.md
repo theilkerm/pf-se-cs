@@ -86,7 +86,7 @@ Now, open the `.env` file and fill in the required values.
 ```dotenv
 # Application Configuration
 NODE_ENV=development
-PORT=5000
+PORT=3001
 MONGO_URI=mongodb://mongodb:27017/e-commerce-db
 FRONTEND_URL=http://localhost:3000
 

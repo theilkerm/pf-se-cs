@@ -57,7 +57,7 @@ The easiest way to run the entire project (frontend, backend, database) is using
 3. **Configure Frontend Environment**
    ```bash
    cd frontend
-   echo "NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1" > .env.local
+   echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1" > .env.local
    cd ..
    ```
 
@@ -68,7 +68,7 @@ The easiest way to run the entire project (frontend, backend, database) is using
 
 5. **Access the Application**
    - Frontend: http://localhost:3000
-   - Backend API: http://localhost:5000
+   - Backend API: http://localhost:3001
 
 ## 🧪 Testing & Data Management
 
