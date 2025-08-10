@@ -32,8 +32,9 @@ export default function RegisterPage() {
       });
       setRegisteredEmail(data.email);
       setIsRegistered(true);
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during registration.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during registration.';
+      setError(errorMessage);
     }
   };
 

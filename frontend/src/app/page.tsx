@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { fetcher } from "@/lib/api";
 import { IProduct, ICategory } from "@/types";
@@ -14,8 +14,15 @@ const ProductCard = ({ product, viewMode }: { product: IProduct, viewMode: 'grid
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!user) { alert("Please log in to use the wishlist."); return; }
-    isWishlisted ? removeFromWishlist(product._id) : addToWishlist(product._id);
+    if (!user) { 
+      alert("Please log in to use the wishlist."); 
+      return; 
+    }
+    if (isWishlisted) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(product._id);
+    }
   };
 
   const imageUrl = product.images && product.images.length > 0
@@ -84,8 +91,9 @@ const NewsletterSignup = () => {
             });
             setMessage(response.message);
             setEmail('');
-        } catch (error: any) {
-            setMessage(error.message || 'An error occurred. Please try again.');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'An error occurred. Please try again.';
+            setMessage(errorMessage);
         } finally {
             setLoading(false);
         }

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import { IProduct, Variant } from '@/types';
+import { IProduct, Variant, IReview } from '@/types';
 import Image from 'next/image';
 import Link from "next/link";
 import ReviewList from '@/components/ReviewList';
@@ -54,9 +54,6 @@ const ProductGrid = ({ title, products }: { title: string, products: IProduct[] 
 };
 
 export default function ProductDetailsPage() {
-  const params = useParams();
-  const productId = params.productId as string;
-  
   const [product, setProduct] = useState<IProduct | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<IProduct[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<IProduct[]>([]);
@@ -64,22 +61,26 @@ export default function ProductDetailsPage() {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState<Variant | null>(null);
   const [imageSrc, setImageSrc] = useState('');
-
+  const [reviews, setReviews] = useState<IReview[]>([]);
   const { user, token } = useAuth(); 
   const router = useRouter();
+  const params = useParams();
+  const productId = params.productId as string;
 
   useEffect(() => {
     const getProductDetails = async () => {
       if (!productId) return;
       try {
         setLoading(true);
-        const [productData, relatedData] = await Promise.all([
+        const [productData, relatedData, reviewsData] = await Promise.all([
             fetcher(`/products/${productId}`),
-            fetcher(`/products/${productId}/related`)
+            fetcher(`/products/${productId}/related`),
+            fetcher(`/products/${productId}/reviews`)
         ]);
         const fetchedProduct = productData.data.product;
         setProduct(fetchedProduct);
         setRelatedProducts(relatedData.data.products);
+        setReviews(reviewsData.data.reviews || []);
 
         if (fetchedProduct) {
             const initialImg = fetchedProduct.images?.[0]
@@ -140,7 +141,10 @@ export default function ProductDetailsPage() {
         body: JSON.stringify({ productId, quantity, variant: selectedVariant })
       });
       alert(`${product.name} has been added to your cart!`);
-    } catch (err: any) { alert(`Error: ${err.message}`); }
+    } catch (err: unknown) { 
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      alert(`Error: ${errorMessage}`); 
+    }
   };
 
   if (loading) { return <div className="text-center p-10">Loading...</div>; }
@@ -192,7 +196,7 @@ export default function ProductDetailsPage() {
       <hr className="my-12" />
       <div>
         {user && <ReviewForm productId={productId} />}
-        <ReviewList reviews={(product as any)?.reviews || []} />
+        <ReviewList reviews={reviews} />
       </div>
 
       <ProductGrid title="Related Products" products={relatedProducts} />

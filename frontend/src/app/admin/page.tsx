@@ -5,13 +5,14 @@ import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
 import SalesChart from '@/components/SalesChart';
 import OrderStatusChart from '@/components/OrderStatusChart';
+import { SalesData, OrderStatusData } from '@/types';
 
 interface DashboardStats {
   totalSales: number;
   orderCount: number;
   customerCount: number;
-  salesTrends: any[];
-  orderStatusDistribution: any[];
+  salesTrends: SalesData[];
+  orderStatusDistribution: OrderStatusData[];
 }
 
 export default function AdminDashboardPage() {

@@ -61,8 +61,8 @@ export default function AdminProductsPage() {
       });
       alert('Bulk action successful.');
       fetchProducts();
-    } catch (error) {
-      console.error("Bulk action failed:", error);
+    } catch {
+      console.error("Bulk action failed");
       alert('Bulk action failed.');
     }
   };
@@ -73,7 +73,7 @@ export default function AdminProductsPage() {
       await fetcher(`/products/${productId}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       alert('Product deleted successfully.');
       fetchProducts();
-    } catch (error) {
+    } catch {
       alert('Failed to delete product.');
     }
   };
@@ -90,7 +90,12 @@ export default function AdminProductsPage() {
       {selectedProducts.length > 0 && (
         <div className="bg-gray-100 p-4 rounded-lg mb-4 flex items-center gap-4">
           <span className="font-semibold">{selectedProducts.length} items selected</span>
-          <select onChange={(e) => { e.target.value && handleBulkAction(e.target.value); e.target.value = ''; }} className="border p-2 rounded">
+          <select onChange={(e) => { 
+            if (e.target.value) {
+              handleBulkAction(e.target.value);
+              e.target.value = '';
+            }
+          }} className="border p-2 rounded">
             <option value="">Select Bulk Action...</option>
             <option value="activate">Activate Selected</option>
             <option value="deactivate">Deactivate Selected</option>

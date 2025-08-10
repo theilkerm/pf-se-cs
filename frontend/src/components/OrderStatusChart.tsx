@@ -2,10 +2,11 @@
 
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { OrderStatusData } from '@/types';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export default function OrderStatusChart({ statusData }: { statusData: any[] }) {
+export default function OrderStatusChart({ statusData }: { statusData: OrderStatusData[] }) {
     const data = {
         labels: statusData.map(d => d._id),
         datasets: [

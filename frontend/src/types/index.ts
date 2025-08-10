@@ -8,7 +8,14 @@ export interface Variant {
   type: string;
   value: string;
   stock: number;
-  _id: string;
+  _id?: string; // Make _id optional for new variants
+}
+
+export interface TempVariant {
+  type: string;
+  value: string;
+  stock: number;
+  tempId: string;
 }
 
 export interface IProduct {
@@ -63,4 +70,21 @@ export interface IOrder {
     totalPrice: number;
     orderStatus: string;
     createdAt: string;
+}
+
+// New interfaces for chart data
+export interface OrderStatusData {
+  _id: string;
+  count: number;
+}
+
+export interface SalesData {
+  _id: string;
+  dailySales: number;
+}
+
+// Error interface for better type safety
+export interface ApiError extends Error {
+  message: string;
+  status?: number;
 }

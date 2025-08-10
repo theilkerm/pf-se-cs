@@ -25,9 +25,10 @@ export default function VerifyEmailPage() {
                 });
                 setStatus(response.message || 'Email verified successfully!');
                 setError('');
-            } catch (err: any) {
+            } catch (err: unknown) {
                 setStatus('');
-                setError(err.message || 'Failed to verify email. The link may be invalid or expired.');
+                const errorMessage = err instanceof Error ? err.message : 'Failed to verify email. The link may be invalid or expired.';
+                setError(errorMessage);
             }
         };
 

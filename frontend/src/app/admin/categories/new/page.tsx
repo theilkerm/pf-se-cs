@@ -43,8 +43,9 @@ export default function NewCategoryPage() {
 
       alert('Category created successfully!');
       router.push('/admin/categories');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

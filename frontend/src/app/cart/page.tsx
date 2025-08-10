@@ -90,15 +90,18 @@ export default function CartPage() {
     );
 
     if (!productVariant || newQuantity > productVariant.stock) {
-      alert(`Cannot add more than ${productVariant.stock} items.`);
+      const stockMessage = productVariant ? `Cannot add more than ${productVariant.stock} items.` : 'Product variant not found.';
+      alert(stockMessage);
       // Revert UI to the actual stock value
-      setCartItems((currentItems) =>
-        currentItems.map((item) =>
-          item._id === cartItem._id
-            ? { ...item, quantity: productVariant.stock }
-            : item
-        )
-      );
+      if (productVariant) {
+        setCartItems((currentItems) =>
+          currentItems.map((item) =>
+            item._id === cartItem._id
+              ? { ...item, quantity: productVariant.stock }
+              : item
+          )
+        );
+      }
       return;
     }
 

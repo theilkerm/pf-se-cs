@@ -22,7 +22,7 @@ export async function fetcher(endpoint: string, options: RequestInit = {}) {
   const isFormData = options.body instanceof FormData;
   const headers: HeadersInit = isFormData
     ? { ...(options.headers || {}) }
-    : { ...defaultHeaders, ...(options.headers || {} as any) };
+    : { ...defaultHeaders, ...(options.headers || {}) };
 
   const res = await fetch(url, { ...options, headers });
 
@@ -38,7 +38,7 @@ export async function fetcher(endpoint: string, options: RequestInit = {}) {
   try {
     return await res.json();
   } catch {
-    return null as any;
+    return null;
   }
 }
 

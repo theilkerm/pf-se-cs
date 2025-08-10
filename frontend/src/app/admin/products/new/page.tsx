@@ -3,8 +3,8 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import { ICategory, Variant } from '@/types';
 import { useRouter } from 'next/navigation';
+import { ICategory, Variant, ApiError } from '@/types';
 
 export default function NewProductPage() {
   const [name, setName] = useState('');
@@ -12,7 +12,7 @@ export default function NewProductPage() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
   const [images, setImages] = useState<FileList | null>(null);
-  const [variants, setVariants] = useState<Omit<Variant, '_id'>>([{ type: 'Color', value: '', stock: 0 }]);
+  const [variants, setVariants] = useState<Variant[]>([]);
   const [tags, setTags] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
   const [categories, setCategories] = useState<ICategory[]>([]);
@@ -28,8 +28,9 @@ export default function NewProductPage() {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCategories(data.data.categories);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch categories.');
+      } catch (err: unknown) {
+        const error = err as ApiError;
+        setError(error.message || 'Failed to fetch categories.');
       }
     };
     if (token) {
@@ -39,8 +40,17 @@ export default function NewProductPage() {
 
   const handleVariantChange = (index: number, field: keyof Omit<Variant, '_id'>, value: string | number) => {
     const newVariants = [...variants];
-    (newVariants[index] as any)[field] = value;
-    setVariants(newVariants);
+    const variant = newVariants[index];
+    if (variant && typeof variant === 'object') {
+      if (field === 'type' && typeof value === 'string') {
+        variant.type = value;
+      } else if (field === 'value' && typeof value === 'string') {
+        variant.value = value;
+      } else if (field === 'stock' && typeof value === 'number') {
+        variant.stock = value;
+      }
+      setVariants(newVariants);
+    }
   };
 
   const addVariant = () => {
@@ -90,8 +100,9 @@ export default function NewProductPage() {
       }
       alert('Product created successfully!');
       router.push('/admin/products');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      setError(error.message);
     } finally {
       setLoading(false);
     }

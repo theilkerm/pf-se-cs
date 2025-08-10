@@ -21,8 +21,8 @@ export default function AdminOrdersPage() {
             headers: { Authorization: `Bearer ${token}` }
         });
         setOrders(data.data.orders);
-        } catch (error) {
-        console.error("Failed to fetch orders:", error);
+        } catch {
+        console.error("Failed to fetch orders");
         } finally {
         setLoading(false);
         }
@@ -59,7 +59,7 @@ export default function AdminOrdersPage() {
                 return newChanges;
             });
             fetchOrders(); // Re-fetch to confirm and get latest data
-        } catch (error) {
+        } catch {
             alert('Failed to update status.');
         }
     };
@@ -89,7 +89,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline">
                         <Link href={`/orders/${order._id}`}>#{order._id.substring(0, 8)}...</Link>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(order.user as any)?.firstName} {(order.user as any)?.lastName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{(order.user as { firstName?: string; lastName?: string })?.firstName} {(order.user as { firstName?: string; lastName?: string })?.lastName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.totalPrice.toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">

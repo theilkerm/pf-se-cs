@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import Link from 'next/link';
+
 import { useRouter, useSearchParams } from 'next/navigation'; // Import router and searchParams
 
 interface ICustomer {
@@ -11,7 +11,7 @@ interface ICustomer {
     firstName: string;
     lastName: string;
     email: string;
-    orders: any[];
+    orders: unknown[];
 }
 
 export default function AdminCustomersPage() {

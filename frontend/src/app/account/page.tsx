@@ -56,8 +56,9 @@ export default function AccountPage() {
       });
       updateUser(response.data.user); // YENİ: Context'teki kullanıcıyı güncelle
       setProfileMessage("Profile updated successfully!");
-    } catch (error: any) {
-      setProfileMessage(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setProfileMessage(`Error: ${errorMessage}`);
     }
   };
 
@@ -77,8 +78,9 @@ export default function AccountPage() {
         "Password updated successfully! You will be logged out shortly."
       );
       setTimeout(() => logout(), 3000); // Log out after 3 seconds
-    } catch (error: any) {
-      setPasswordMessage(`Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setPasswordMessage(`Error: ${errorMessage}`);
     }
   };
 

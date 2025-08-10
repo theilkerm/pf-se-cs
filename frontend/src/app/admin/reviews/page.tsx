@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { authedFetcher } from '@/lib/api';
+import { ApiError } from '@/types';
 
 interface Review {
   _id: string;
@@ -20,21 +21,22 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
     try {
       const res = await authedFetcher(token, '/reviews/admin');
       setReviews(res?.data?.reviews || res?.data || []);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load reviews');
+    } catch (e: unknown) {
+      const error = e as ApiError;
+      setError(error.message || 'Failed to load reviews');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [token]);
+  useEffect(() => { load(); }, [load]);
 
   const approveReview = async (id: string) => {
     if (!token) return;

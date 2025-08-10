@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
 import { useForm } from 'react-hook-form';
@@ -62,8 +62,9 @@ export default function AddressBookPage() {
             });
             updateUser(updatedUser.data.user);
             setMessage('Address deleted successfully!');
-        } catch (error: any) {
-            setMessage(`Error: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            setMessage(`Error: ${errorMessage}`);
         }
     };
 
@@ -85,8 +86,9 @@ export default function AddressBookPage() {
             setMessage(`Address ${editingAddress ? 'updated' : 'added'} successfully!`);
             setIsFormVisible(false);
             setEditingAddress(null);
-        } catch (error: any) {
-            setMessage(`Error: ${error.message}`);
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+            setMessage(`Error: ${errorMessage}`);
         }
     };
 

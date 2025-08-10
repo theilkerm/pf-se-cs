@@ -27,7 +27,7 @@ export default function EditCategoryPage() {
         setName(category.name);
         setDescription(category.description);
         setIsActive(category.isActive);
-      } catch (err) {
+      } catch {
         setError('Failed to load category data.');
       } finally {
         setLoading(false);
@@ -50,8 +50,9 @@ export default function EditCategoryPage() {
       });
       alert('Category updated successfully!');
       router.push('/admin/categories');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update category.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update category.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

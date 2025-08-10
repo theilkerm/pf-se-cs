@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
 import Image from 'next/image';
-import { OrderItem, Variant } from '@/types'; // Import types
+import { OrderItem } from '@/types'; // Import types
 
 interface IOrder {
     _id: string;

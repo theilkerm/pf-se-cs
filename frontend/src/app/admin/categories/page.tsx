@@ -19,8 +19,8 @@ export default function AdminCategoriesPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setCategories(data.data.categories);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
+    } catch {
+      console.error("Failed to fetch categories");
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export default function AdminCategoriesPage() {
       });
       alert('Category deactivated successfully.');
       fetchCategories();
-    } catch (error) {
+    } catch {
       alert('Failed to deactivate category.');
     }
   };

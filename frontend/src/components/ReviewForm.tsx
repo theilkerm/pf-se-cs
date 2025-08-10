@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { fetcher } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { ApiError } from "@/types";
 
 interface ReviewFormProps {
     productId: string;
@@ -29,8 +30,9 @@ export default function ReviewForm({ productId }: ReviewFormProps) {
             });
             alert("Review submitted! It will be visible after approval.");
             router.refresh(); // Refresh the page to show updated data
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            const error = err as ApiError;
+            setError(error.message || 'An error occurred while submitting the review.');
         }
     };
 

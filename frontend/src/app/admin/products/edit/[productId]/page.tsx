@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import { ICategory, Variant } from '@/types';
+import { ICategory, Variant, ApiError } from '@/types';
 import { useRouter, useParams } from 'next/navigation';
 
 export default function EditProductPage() {
@@ -37,7 +37,7 @@ export default function EditProductPage() {
         setCategory(product.category._id);
         setVariants(product.variants);
         setCategories(catData.data.categories);
-      } catch (err) {
+      } catch {
         setError("Failed to load product data.");
       } finally {
         setLoading(false);
@@ -48,17 +48,25 @@ export default function EditProductPage() {
   
   const handleVariantChange = (index: number, field: keyof Variant, value: string | number) => {
     const newVariants = [...variants];
-    (newVariants[index] as any)[field] = value;
-    setVariants(newVariants);
+    const variant = newVariants[index];
+    if (variant && typeof variant === 'object') {
+      if (field === 'type' && typeof value === 'string') {
+        variant.type = value;
+      } else if (field === 'value' && typeof value === 'string') {
+        variant.value = value;
+      } else if (field === 'stock' && typeof value === 'number') {
+        variant.stock = value;
+      }
+      setVariants(newVariants);
+    }
   };
   const addVariant = () => {
-    const newVariant = { 
+    const newVariant: Variant = { 
         type: 'Color', 
         value: '', 
-        stock: 0, 
-        tempId: new Date().toISOString() // Use a temporary unique key for rendering
+        stock: 0
     };
-    setVariants([...variants, newVariant as any]);
+    setVariants([...variants, newVariant]);
   };
   
   const removeVariant = (index: number) => {
@@ -79,8 +87,9 @@ export default function EditProductPage() {
       });
       alert('Product updated successfully!');
       router.push('/admin/products');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update product.');
+    } catch (err: unknown) {
+      const error = err as ApiError;
+      setError(error.message || 'Failed to update product.');
     } finally {
       setLoading(false);
     }

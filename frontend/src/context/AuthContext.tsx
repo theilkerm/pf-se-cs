@@ -22,11 +22,8 @@ interface User {
   addresses: Address[];
 }
 
-
-
 interface LoginPayload { email: string; password: string; }
 interface RegisterPayload { firstName: string; lastName: string; email: string; password: string; }
-
 
 interface AuthContextType {
   user: User | null;
@@ -83,7 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/');
   };
 
-  const login = async (loginData: any) => {
+  const login = async (loginData: LoginPayload) => {
     try {
       const data = await fetcher('/auth/login', {
         method: 'POST',
@@ -96,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (registerData: any) => {
+  const register = async (registerData: RegisterPayload) => {
     try {
       const data = await fetcher('/auth/register', {
         method: 'POST',
@@ -121,10 +118,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = (newUser: User) => {
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
-      const updateUser = (newUser: User) => {
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-  };
   };
   
   const addToWishlist = async (productId: string) => {

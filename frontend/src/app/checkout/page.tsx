@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import { IProduct, IOrder } from '@/types';
+import { IProduct } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,9 +89,10 @@ export default function CheckoutPage() {
       alert('Order placed successfully!');
       router.push(`/orders/${newOrder._id}`);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to place order:", error);
-      alert(`There was an error placing your order: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      alert(`There was an error placing your order: ${errorMessage}`);
     }
   };
 
