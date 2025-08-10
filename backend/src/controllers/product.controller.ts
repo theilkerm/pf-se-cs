@@ -15,6 +15,7 @@ const catchAsync = (fn: Function) => {
 };
 
 export const getAllProducts = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    console.log('getAllProducts called with query:', req.query);
     const queryObj: { [key: string]: any } = { ...req.query };
     const excludedFields = ['page', 'sort', 'limit', 'fields', 'search'];
     excludedFields.forEach(el => delete queryObj[el]);
@@ -61,8 +62,10 @@ export const getAllProducts = catchAsync(async (req: CustomRequest, res: Respons
 });
 
 export const getProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    console.log('getProduct called with ID:', req.params.id);
     const product = await Product.findById(req.params.id).populate('category').populate({ path: 'reviews', match: { isApproved: true } });
     if (!product) { return next(new AppError('No product found with that ID', 404)); }
+    console.log('Found product:', product._id, product.name);
     res.status(200).json({ status: 'success', data: { product } });
 });
 
