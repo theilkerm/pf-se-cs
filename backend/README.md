@@ -1,181 +1,190 @@
-# E-Commerce Platform API - Backend
+# E-Commerce Platform - Backend API
 
-This repository contains the backend source code for a full-featured e-commerce platform, developed as part of a software engineer case study. The API is built with Node.js, Express, and MongoDB, following modern development practices and a RESTful architecture.
+## 1. Overview
 
-## Features Implemented
+This repository contains the backend API for a full-featured e-commerce platform. It is built with Node.js and Express, follows RESTful principles, and provides all the necessary functionalities for a modern online store, including user authentication, product management, a shopping cart, an order processing system, and a product review engine.
 
-- [x] **User Authentication**: JWT-based registration, login, email verification, and password reset.
-- [x] **Role-Based Access Control**: Differentiated access for `customer` and `admin` roles.
-- [x] **Product Management (Admin)**: Full CRUD operations for products, including image uploads.
-- [x] **Category Management (Admin)**: Full CRUD operations for product categories.
-- [x] **Customer Management (Admin)**: Full CRUD operations for customer accounts.
-- [x] **Shopping Cart**: Persistent, user-specific shopping cart functionality with stock validation.
-- [x] **Order Processing**: Checkout process to convert a cart into an order, with stock management.
-- [x] **Order History**: Users can view their past orders.
-- [x] **Review System**: Users can review products they have purchased, with admin approval and average rating calculation.
-- [x] **Admin Dashboard**: An endpoint to aggregate key statistics (total sales, counts, etc.).
-- [x] **Advanced Security**: Includes rate limiting, input sanitization (XSS, NoSQL Injection).
-- [x] **Schema-Based Validation**: All major input is validated using Zod.
-- [x] **Automated Testing**: Comprehensive integration test suite using Jest and Supertest.
+The API is designed to be scalable, secure, and easy to integrate with any client-side application.
 
-## Technology Stack
+## 2. Core Features
 
-- **Backend**: Node.js, Express.js, TypeScript
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JSON Web Tokens (JWT), bcryptjs
-- **Validation**: Zod
-- **Email**: Nodemailer (with Mailtrap for development)
-- **File Uploads**: Multer
-- **Security**: `express-rate-limit`, `express-mongo-sanitize`, `xss-clean`
-- **Testing**: Jest, Supertest
-- **Containerization**: Docker, Docker Compose
-- **Development**: `tsx` for hot-reloading
+-   **User Authentication & Authorization:**
+    -   Secure user registration with password hashing (`bcryptjs`).
+    -   JWT-based authentication for stateless sessions.
+    -   Email verification flow for new user accounts.
+    -   Role-based access control (RBAC) to distinguish between `customer` and `admin` permissions.
+    -   Functionality for users to manage their profiles and addresses.
+-   **Product & Category Management:**
+    -   Full CRUD (Create, Read, Update, Delete) operations for products and categories, restricted to admins.
+    -   Support for multiple image uploads for products using `multer`.
+    -   Product variants (e.g., color, size) with individual stock tracking.
+    -   Ability to mark products as "featured" and add descriptive tags.
+-   **Shopping Cart System:**
+    -   Persistent, user-specific shopping carts.
+    -   Add, update, and remove items from the cart.
+-   **Order Management:**
+    -   Create orders from the user's shopping cart.
+    -   Users can view their own order history.
+    -   Admins can view and update the status of all orders (e.g., from "Processing" to "Shipped").
+-   **Product Reviews and Ratings:**
+    -   Authenticated users can submit reviews and a 1-5 star rating for products they have purchased.
+    -   Product pages can display an average rating and a list of all reviews.
+-   **Robust Infrastructure:**
+    -   Centralized error handling middleware.
+    -   Input validation for incoming requests using `zod`.
+    -   Containerized with Docker for consistent development and deployment environments.
 
-## Getting Started
+## 3. Technology Stack
 
-Follow these instructions to get the project set up and running on your local machine for development and testing purposes.
+-   **Runtime Environment:** Node.js
+-   **Web Framework:** Express.js
+-   **Database:** MongoDB
+-   **ODM (Object-Document Mapper):** Mongoose
+-   **Authentication:** JSON Web Tokens (JWT)
+-   **File Uploads:** Multer
+-   **Validation:** Zod
+-   **Email Service:** Nodemailer
+-   **Containerization:** Docker & Docker Compose
+
+## 4. Setup and Installation
+
+Follow these steps to get the backend server running on your local machine.
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- Docker and Docker Compose
-- An API testing tool like Postman or Insomnia
-- A free [Mailtrap.io](https://mailtrap.io) account for testing email features.
+-   [Node.js](https://nodejs.org/) (version 18.x or higher is recommended)
+-   [Docker](https://www.docker.com/products/docker-desktop/) and [Docker Compose](https://docs.docker.com/compose/)
 
-### Installation & Setup
+### Step 1: Clone the Repository
 
-1.  **Clone the repository:**
-    ```bash
-    git clone <your-repo-url>
-    cd pf-se-cs
-    ```
+```bash
+git clone <your-repository-url>
+cd <repository-name>/backend
+```
 
-2.  **Configure Environment Variables:**
-    Navigate to the `backend` directory. Copy the example environment file and fill in your details, especially your Mailtrap credentials.
-    ```bash
-    cd backend
-    cp .env.example .env
-    ```
+### Step 2: Configure Environment Variables
 
-    **`.env.example`**
-    ```env
-    # Server Port
-    PORT=3001
-    
-    # MongoDB Connection
-    MONGO_URI=mongodb://mongo:27017/e-commerce-db
-    
-    # JWT Secrets
-    JWT_SECRET=this-is-a-super-secret-key-change-it-later
-    JWT_EXPIPIRES_IN=90d
-    
-    # EMAIL CONFIGURATION (for Mailtrap.io)
-    EMAIL_HOST=
-    EMAIL_PORT=
-    EMAIL_USERNAME=
-    EMAIL_PASSWORD=
-    EMAIL_FROM=
-    ```
+Create a `.env` file in the `backend` directory by copying the example file.
 
-3.  **Build and Run with Docker Compose:**
-    From the **root project directory** (`pf-se-cs`), run the following command.
-    ```bash
-    docker-compose up --build -d
-    ```
-    Your API will now be running at `http://localhost:3001`.
+```bash
+cp .env.example .env
+```
 
-4.  **Install Local Dependencies (for IDE support):**
-    ```bash
-    cd backend
-    npm install
-    ```
+Now, open the `.env` file and fill in the required values.
 
-## Running the Application
+```dotenv
+# Application Configuration
+NODE_ENV=development
+PORT=5000
+DATABASE_URL=mongodb://mongodb:27017/ecommerce-db
+FRONTEND_URL=http://localhost:3000
 
--   **Development Server**: `docker-compose up` starts the server with hot-reloading.
--   **Automated Tests**:
-    ```bash
-    # Run tests once and exit
-    npm run test:single
-    
-    # Run tests in interactive watch mode
-    npm test
-    ```
+# JWT Secrets
+JWT_SECRET=your-super-secret-jwt-key
+JWT_EXPIRES_IN=90d
 
-## API Documentation
+# Email Service (e.g., Mailtrap.io for development)
+EMAIL_HOST=smtp.mailtrap.io
+EMAIL_PORT=2525
+EMAIL_USERNAME=your_mailtrap_username
+EMAIL_PASSWORD=your_mailtrap_password
+EMAIL_FROM=My E-Commerce <noreply@ecommerce.com>
+```
+**Note:** For the `DATABASE_URL`, `mongodb` is the name of the service defined in `docker-compose.yml`. If you are not using Docker, replace it with `localhost` or your MongoDB host address.
 
-All endpoints are prefixed with `/api/v1`.
+### Step 3: Run the Application
 
----
+#### Option A: Using Docker (Recommended)
 
-#### **Authentication (`/auth`)**
+This is the simplest way to get the entire application stack (backend, frontend, and database) running. Navigate to the **root directory** of the project (the one containing `docker-compose.yml`) and run:
 
--   **`POST /register`**: Register a new user and send a verification email. (Public)
--   **`POST /login`**: Log in a user and receive a JWT. (Public)
--   **`GET /verify-email/:token`**: Verify a user's email. (Public)
--   **`POST /forgot-password`**: Send a password reset link. (Public)
--   **`PATCH /reset-password/:token`**: Reset the password with a valid token. (Public)
+```bash
+docker-compose up -d --build
+```
 
----
+-   The `--build` flag ensures that Docker images are rebuilt if there are any changes.
+-   The `-d` flag runs the containers in detached mode.
 
-#### **Users (`/users`)**
+To view the logs for the backend service:
+```bash
+docker-compose logs -f backend
+```
 
--   **`GET /me`**: Get the profile of the currently logged-in user. (Private)
--   **`GET /`**: Get a list of all customers. (Admin)
--   **`GET /:id`**: Get a single customer's details, including order history. (Admin)
--   **`PATCH /:id`**: Update a user's details. (Admin)
--   **`DELETE /:id`**: Delete a user. (Admin)
+#### Option B: Running Locally without Docker
 
----
+If you prefer to run the server directly on your machine, you'll need a local MongoDB instance.
 
-#### **Categories (`/categories`)**
+```bash
+# Install dependencies
+npm install
 
--   **`GET /`**: Get a list of all active categories. (Public)
--   **`POST /`**: Create a new category. (Admin)
-    -   **Body**: `{ "name": "Electronics", "description": "..." }`
+# Start the development server (with hot-reloading)
+npm run dev
 
-*(Note: Full CRUD for categories can be easily extended by adding GET /:id, PATCH /:id, and DELETE /:id routes for admins.)*
+# Or, start the production-ready server
+npm start
+```
 
----
+## 5. API Endpoints
 
-#### **Products (`/products`)**
+The base URL for all API routes is `/api/v1`.
 
--   **`GET /`**: Get a list of all products. Supports filtering by category (e.g., `?category=<category_id>`). (Public)
--   **`GET /:id`**: Get a single product by its ID. (Public)
--   **`POST /`**: Create a new product with images. (Admin)
-    -   **Body**: `form-data` with fields for `name`, `description`, `price`, `stock`, `category` (ID), and `images` (file upload).
--   **`PATCH /:id`**: Update a product's details. (Admin)
--   **`DELETE /:id`**: Delete a product and its associated reviews. (Admin)
+### Authentication (`/auth`)
 
----
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `POST` | `/register`                 | Registers a new user.                        | Public  |
+| `POST` | `/login`                    | Logs in a user and returns a JWT.            | Public  |
+| `GET`  | `/verify-email/:token`      | Verifies a user's email address.             | Public  |
+| `POST` | `/forgot-password`          | Sends a password reset link to the user's email. | Public  |
+| `PATCH`| `/reset-password/:token`    | Resets the user's password.                  | Public  |
 
-#### **Cart (`/cart`)**
+### Users (`/users`)
 
--   **`GET /`**: Get the current user's shopping cart. (Private)
--   **`POST /`**: Add an item to the cart or update its quantity. (Private)
-    -   **Body**: `{ "productId": "...", "quantity": 1 }`
--   **`DELETE /:productId`**: Remove an item from the cart. (Private)
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/me`                       | Get details of the currently logged-in user. | Private |
+| `PATCH`| `/update-me`                | Update details of the logged-in user.        | Private |
+| `PATCH`| `/update-my-password`       | Update the password of the logged-in user.   | Private |
+| `POST` | `/me/addresses`             | Add a new address to the user's address book.| Private |
+| `PATCH`| `/me/addresses/:addressId`  | Update an existing address.                  | Private |
+| `DELETE`| `/me/addresses/:addressId`  | Delete an address.                           | Private |
+| `GET`  | `/`                         | Get a list of all users.                     | Admin   |
 
----
+### Products (`/products`)
 
-#### **Orders (`/orders`)**
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/`                         | Get a list of all products.                  | Public  |
+| `GET`  | `/:id`                      | Get a single product by its ID.              | Public  |
+| `POST` | `/`                         | Create a new product.                        | Admin   |
+| `PATCH`| `/:id`                      | Update an existing product.                  | Admin   |
+| `DELETE`| `/:id`                      | Delete a product.                            | Admin   |
+| `POST` | `/:productId/reviews`       | Add a review to a product.                   | Private |
 
--   **`POST /`**: Create a new order from the user's cart (checkout). (Private)
-    -   **Body**: `{ "shippingAddress": { ... } }`
--   **`GET /my-orders`**: Get the logged-in user's order history. (Private)
+### Categories (`/categories`)
 
----
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/`                         | Get a list of all categories.                | Public  |
+| `POST` | `/`                         | Create a new category.                       | Admin   |
+| `PATCH`| `/:id`                      | Update an existing category.                 | Admin   |
+| `DELETE`| `/:id`                      | Delete a category.                           | Admin   |
 
-#### **Reviews (`/reviews`)**
+### Cart (`/cart`)
 
--   **`POST /`**: Create a new review for a purchased product. (Private)
-    -   **Body**: `{ "productId": "...", "rating": 5, "comment": "..." }`
--   **`PATCH /:id/approve`**: Approve a pending review. (Admin)
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/`                         | Get the contents of the user's cart.         | Private |
+| `POST` | `/`                         | Add an item to the cart.                     | Private |
+| `PATCH`| `/:itemId`                  | Update the quantity of an item in the cart.  | Private |
+| `DELETE`| `/:itemId`                  | Remove an item from the cart.                | Private |
 
----
+### Orders (`/orders`)
 
-#### **Dashboard (`/dashboard`)**
-
--   **`GET /stats`**: Get aggregated statistics for the admin dashboard. (Admin)
-
----
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/my-orders`                | Get the order history for the logged-in user.| Private |
+| `POST` | `/`                         | Create a new order from the cart.            | Private |
+| `GET`  | `/`                         | Get a list of all orders in the system.      | Admin   |
+| `PATCH`| `/:id`                      | Update the status of an order.               | Admin   |
