@@ -68,6 +68,22 @@ export const approveReview = catchAsync(async (req: Request, res: Response, next
     });
 });
 
+// @desc    Get reviews for a specific product
+// @route   GET /api/v1/products/:id/reviews
+// @access  Public
+export const getProductReviews = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const reviews = await Review.find({ 
+        product: req.params.id, 
+        isApproved: true 
+    }).populate('user', 'name');
+    
+    res.status(200).json({
+        status: 'success',
+        results: reviews.length,
+        data: { reviews }
+    });
+});
+
 // @desc    Get all reviews (for admin)
 // @route   GET /api/v1/reviews/admin
 // @access  Private/Admin
