@@ -8,6 +8,7 @@ import {
     deleteCategory
 } from '../controllers/category.controller.js';
 import { protect, restrictTo } from '../controllers/auth.controller.js';
+import { upload } from '../config/multer.js'; // multer'ı import et
 
 const router = Router();
 
@@ -15,12 +16,16 @@ const router = Router();
 router.get('/', getAllCategories);
 
 // --- ADMIN ROUTES ---
-router.get('/admin', protect, restrictTo('admin'), getAdminCategories);
-router.post('/', protect, restrictTo('admin'), createCategory);
+router.use(protect, restrictTo('admin'));
+
+router.get('/admin', getAdminCategories);
+// Kategori oluşturmaya görsel yüklemeyi ekle (tek dosya: 'image')
+router.post('/', upload.single('image'), createCategory);
 
 router.route('/:id')
-    .get(protect, restrictTo('admin'), getCategory)
-    .patch(protect, restrictTo('admin'), updateCategory)
-    .delete(protect, restrictTo('admin'), deleteCategory);
+    .get(getCategory)
+    // Kategori güncellemeye görsel yüklemeyi ekle
+    .patch(upload.single('image'), updateCategory)
+    .delete(deleteCategory);
 
 export default router;

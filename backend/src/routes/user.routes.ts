@@ -7,20 +7,32 @@ import {
     updateUser,
     deleteUser,
     updateMe,
-    updateMyPassword
+    updateMyPassword,
+    addAddress,
+    updateAddress,
+    deleteAddress
 } from '../controllers/user.controller.js';
+import validate from '../middleware/validate.js';
+import { addressSchema } from '../schemas/user.schema.js';
 
 const router = Router();
 
 // --- Routes for the logged-in user ---
-router.use(protect); // All routes below this point are protected
+router.use(protect);
 router.get('/me', getMe);
 router.patch('/update-me', updateMe);
 router.patch('/update-my-password', updateMyPassword);
 
-// --- Routes for Admin only ---
-router.use(restrictTo('admin')); // All routes below this point are for admins only
+// Address Management
+router.route('/me/addresses')
+    .post(validate(addressSchema), addAddress);
 
+router.route('/me/addresses/:addressId')
+    .patch(validate(addressSchema), updateAddress)
+    .delete(deleteAddress);
+
+// --- Routes for Admin only ---
+router.use(restrictTo('admin'));
 router.route('/')
     .get(getAllUsers);
     

@@ -3,6 +3,7 @@ import User, { IUser } from '../models/user.model.js';
 import AppError from '../utils/appError.js';
 import { createSendToken } from '../utils/token.js';
 
+
 // Extend Express Request type to include the user property
 interface CustomRequest extends Request {
   user?: IUser;
@@ -151,4 +152,76 @@ export const updateMyPassword = catchAsync(async (req: CustomRequest, res: Respo
 
     // 4) Log user in, send JWT
     createSendToken(user, 200, res);
+});
+
+
+// @desc    Add a new address for the logged-in user
+// @route   POST /api/v1/users/me/addresses
+// @access  Private
+export const addAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user!.id);
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
+    
+    user.addresses.push(req.body);
+    await user.save({ validateBeforeSave: false });
+
+    res.status(201).json({
+        status: 'success',
+        data: {
+            user
+        }
+    });
+});
+
+// @desc    Update an existing address for the logged-in user
+// @route   PATCH /api/v1/users/me/addresses/:addressId
+// @access  Private
+export const updateAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user!.id);
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
+
+    const address = user.addresses.id(req.params.addressId);
+    if (!address) {
+        return next(new AppError('Address not found', 404));
+    }
+
+    Object.assign(address, req.body);
+    await user.save({ validateBeforeSave: false });
+
+    res.status(200).json({
+        status: 'success',
+        data: {
+            user
+        }
+    });
+});
+
+
+// @desc    Delete an address for the logged-in user
+// @route   DELETE /api/v1/users/me/addresses/:addressId
+// @access  Private
+export const deleteAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const user = await User.findById(req.user!.id);
+    if (!user) {
+        return next(new AppError('User not found', 404));
+    }
+    
+    const address = user.addresses.id(req.params.addressId);
+    if (!address) {
+        return next(new AppError('Address not found', 404));
+    }
+
+    (address as any).remove();
+    await user.save({ validateBeforeSave: false });
+    
+    res.status(200).json({
+        status: 'success',
+        data: {
+          user,
+        },
+    });
 });

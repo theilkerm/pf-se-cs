@@ -5,13 +5,24 @@ import { fetcher } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { IProduct } from '@/types';
 
+interface Address {
+    _id: string;
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+}
 interface User {
   _id: string;
   email: string;
   firstName: string;
   lastName: string;
   role: 'customer' | 'admin';
+  addresses: Address[];
 }
+
+
 
 interface LoginPayload { email: string; password: string; }
 interface RegisterPayload { firstName: string; lastName: string; email: string; password: string; }
@@ -110,6 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const updateUser = (newUser: User) => {
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
+      const updateUser = (newUser: User) => {
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
   };
   
   const addToWishlist = async (productId: string) => {

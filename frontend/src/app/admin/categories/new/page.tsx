@@ -2,12 +2,12 @@
 
 import { useState, FormEvent } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { fetcher } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function NewCategoryPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [image, setImage] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { token } = useAuth();
@@ -15,20 +15,36 @@ export default function NewCategoryPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    if (!token) {
+      setError('You must be logged in to create a category.');
+      return;
+    }
     setLoading(true);
     setError('');
 
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('description', description);
+    if (image) {
+      formData.append('image', image);
+    }
+
     try {
-      await fetcher('/categories', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name, description })
+        body: formData,
       });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to create category.');
+      }
+
       alert('Category created successfully!');
       router.push('/admin/categories');
     } catch (err: any) {
-      setError(err.message || 'Failed to create category.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -47,6 +63,15 @@ export default function NewCategoryPage() {
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
             <textarea name="description" id="description" required value={description} onChange={(e) => setDescription(e.target.value)} rows={4} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Category Image</label>
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)} 
+              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
+            />
           </div>
         </div>
         <div className="mt-6">

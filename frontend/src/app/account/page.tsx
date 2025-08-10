@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { fetcher } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AccountPage() {
   const { user, token, loading: authLoading, logout, updateUser } = useAuth(); // updateUser'ı context'ten al
@@ -88,6 +89,14 @@ export default function AccountPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Account</h1>
+      <div className="mb-8">
+        <Link
+          href="/account/addresses"
+          className="text-blue-600 hover:underline"
+        >
+          Manage Address Book
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Update Profile Form */}

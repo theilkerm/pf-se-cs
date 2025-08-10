@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { fetcher } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 const LoginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -15,6 +15,8 @@ type LoginForm = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const [error, setError] = useState('');
+
   const {
     register,
     handleSubmit,
@@ -22,12 +24,18 @@ export default function LoginPage() {
   } = useForm<LoginForm>({ resolver: zodResolver(LoginSchema) });
 
   const onSubmit = async (data: LoginForm) => {
-    await login(data); // just pass the form data
+    setError('');
+    try {
+      await login(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to log in. Please check your credentials.');
+    }
   };
 
   return (
-    <main className="max-w-md mx-auto p-6">
+    <main className="max-w-md mx-auto p-6 mt-10">
       <h1 className="text-xl font-semibold mb-4">Sign in</h1>
+      {error && <p className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</p>}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <input

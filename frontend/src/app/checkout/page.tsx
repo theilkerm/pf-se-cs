@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { fetcher } from '@/lib/api';
-import { IProduct } from '@/types';
+import { IProduct, IOrder } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,17 +16,22 @@ interface CartItem {
   _id: string;
 }
 
+interface Address extends AddressForm {
+    _id: string;
+}
+
 export default function CheckoutPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, token, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
-  // --- react-hook-form SETUP ---
-  // The hook is now correctly called inside the component body
   const { 
     register, 
     handleSubmit, 
+    reset,
+    setValue,
     formState: { errors, isSubmitting } 
   } = useForm<AddressForm>({
     resolver: zodResolver(AddressSchema)
@@ -57,7 +62,15 @@ export default function CheckoutPage() {
     if (token) {
       getCart();
     }
-  }, [user, token, authLoading, router]);
+    
+    // Set default address if available
+    if (user?.addresses && user.addresses.length > 0) {
+        const defaultAddress = user.addresses[0];
+        setSelectedAddress(defaultAddress);
+        reset(defaultAddress);
+    }
+
+  }, [user, token, authLoading, router, reset]);
 
   const handlePlaceOrder = async (data: AddressForm) => {
     if (!token) {
@@ -76,11 +89,21 @@ export default function CheckoutPage() {
       alert('Order placed successfully!');
       router.push(`/orders/${newOrder._id}`);
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to place order:", error);
-      alert("There was an error placing your order. Please try again.");
+      alert(`There was an error placing your order: ${error.message}`);
     }
   };
+
+  const handleAddressSelection = (address: Address) => {
+    setSelectedAddress(address);
+    // Populate form fields with selected address
+    setValue('street', address.street);
+    setValue('city', address.city);
+    setValue('state', address.state);
+    setValue('zipCode', address.zipCode);
+    setValue('country', address.country);
+  }
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -91,12 +114,30 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Checkout</h1>
-      {/* The form now uses handleSubmit from react-hook-form */}
       <form onSubmit={handleSubmit(handlePlaceOrder)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white p-6 shadow-md rounded-lg">
           <h2 className="text-2xl font-semibold mb-4">Shipping Address</h2>
+          
+          {user?.addresses && user.addresses.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-medium mb-2">Select a saved address:</h3>
+              <div className="flex flex-wrap gap-4">
+                {user.addresses.map(addr => (
+                  <div 
+                    key={addr._id}
+                    onClick={() => handleAddressSelection(addr)}
+                    className={`p-4 border rounded-lg cursor-pointer ${selectedAddress?._id === addr._id ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-300'}`}
+                  >
+                    <p>{addr.street}</p>
+                    <p>{addr.city}, {addr.state} {addr.zipCode}</p>
+                  </div>
+                ))}
+              </div>
+               <p className="text-center my-4 text-gray-500">OR enter a new one below</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            
             <div className="md:col-span-2">
               <label htmlFor="country" className="block text-sm font-medium text-gray-700">Country</label>
               <input type="text" id="country" {...register('country')} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
@@ -126,7 +167,6 @@ export default function CheckoutPage() {
               <input type="text" id="zipCode" {...register('zipCode')} className="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
               {errors.zipCode && <p className="text-red-500 text-xs mt-1">{errors.zipCode.message}</p>}
             </div>
-
           </div>
         </div>
 

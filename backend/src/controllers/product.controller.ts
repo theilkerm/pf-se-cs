@@ -68,21 +68,43 @@ export const getProduct = catchAsync(async (req: Request, res: Response, next: N
 
 export const createProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const productData = { ...req.body };
+    
     if (productData.variants && typeof productData.variants === 'string') {
         productData.variants = JSON.parse(productData.variants);
     }
+    
+    // Etiketleri virgülle ayrılmış string'den array'e çevir
+    if (productData.tags && typeof productData.tags === 'string') {
+        productData.tags = productData.tags.split(',').map((tag: string) => tag.trim());
+    }
+
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
         productData.images = req.files.map((file: any) => `/uploads/${file.filename}`);
     }
+
+    // isFeatured checkbox'ı formdan 'on' olarak gelir, bunu boolean'a çevir
+    productData.isFeatured = productData.isFeatured === 'on';
+
     const newProduct = await Product.create(productData);
     res.status(201).json({ status: 'success', data: { product: newProduct } });
 });
 
 export const updateProduct = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const updateData = { ...req.body };
+    
     if (updateData.variants && typeof updateData.variants === 'string') {
         updateData.variants = JSON.parse(updateData.variants);
     }
+
+    if (updateData.tags && typeof updateData.tags === 'string') {
+        updateData.tags = updateData.tags.split(',').map((tag: string) => tag.trim());
+    } else if (updateData.tags === '') {
+        updateData.tags = [];
+    }
+
+    // isFeatured checkbox'ı formdan 'on' veya undefined olarak gelir
+    updateData.isFeatured = !!updateData.isFeatured;
+    
     const product = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
     if (!product) { return next(new AppError('No product found with that ID', 404)); }
     res.status(200).json({ status: 'success', data: { product } });

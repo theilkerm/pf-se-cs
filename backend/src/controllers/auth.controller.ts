@@ -32,7 +32,8 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   await newUser.save({ validateBeforeSave: false });
 
   // Send the verification email
-  const verificationURL = `${req.protocol}://${req.get('host')}/api/v1/auth/verify-email/${verificationToken}`;
+  // Frontend'deki verify-email sayfasının adresini kullanıyoruz
+  const verificationURL = `http://localhost:3000/verify-email/${verificationToken}`;
   const message = `Welcome to the E-commerce Platform! Please verify your email by clicking the following link: ${verificationURL}`;
 
   try {
@@ -41,12 +42,18 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
       subject: 'Email Verification',
       message
     });
-  } catch (err) {
-    // Handle email sending error if needed, but don't block registration
-    console.error("Email could not be sent:", err);
-  }
+    
+    res.status(201).json({
+        status: 'success',
+        message: 'Registration successful. Please check your inbox to verify your email.'
+    });
 
-  createSendToken(newUser, 201, res);
+  } catch (err) {
+    // Eğer e-posta gönderilemezse, token'ları temizle ve hatayı bildir.
+    (newUser as any).emailVerificationToken = undefined;
+    await newUser.save({ validateBeforeSave: false });
+    return next(new AppError('There was an error sending the verification email. Please try again later.', 500));
+  }
 });
 
 export const login = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
@@ -62,6 +69,11 @@ export const login = catchAsync(async (req: Request, res: Response, next: NextFu
     return next(new AppError('Incorrect email or password', 401));
   }
 
+  // E-posta doğrulama kontrolü
+  if (!user.isEmailVerified) {
+    return next(new AppError('Please verify your email to log in.', 403));
+  }
+
   createSendToken(user, 200, res);
 });
 
@@ -75,7 +87,6 @@ export const protect = catchAsync(async (req: CustomRequest, res: Response, next
     return next(new AppError('You are not logged in! Please log in to get access.', 401));
   }
 
-  // CORRECTED: Removed unnecessary and incorrect 'promisify' wrapper.
   const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
   const currentUser = await User.findById(decoded.id);
@@ -88,20 +99,17 @@ export const protect = catchAsync(async (req: CustomRequest, res: Response, next
 });
 
 export const forgotPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    // To prevent email enumeration attacks, we don't reveal that the user was not found
     return res.status(200).json({ status: 'success', message: 'If the email is registered, a password reset link has been sent.' });
   }
 
-  // 2) Generate the random reset token
   const resetToken = (user as any).createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
-  const resetURL = `${req.protocol}://${req.get('host')}/api/v1/auth/reset-password/${resetToken}`;
-  const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
+  // Frontend'deki reset-password sayfasının adresini kullanıyoruz
+  const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+  const message = `Forgot your password? Click the link to reset it: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
 
   try {
     await sendEmail({
@@ -124,7 +132,6 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
 });
 
 export const resetPassword = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
     .update(req.params.token)
@@ -135,7 +142,6 @@ export const resetPassword = catchAsync(async (req: Request, res: Response, next
     passwordResetExpires: { $gt: Date.now() }
   });
 
-  // 2) If token has not expired, and there is a user, set the new password
   if (!user) {
     return next(new AppError('Token is invalid or has expired', 400));
   }
@@ -145,12 +151,10 @@ export const resetPassword = catchAsync(async (req: Request, res: Response, next
   (user as any).passwordResetExpires = undefined;
   await user.save();
 
-  // 3) Log the user in, send JWT
   createSendToken(user, 200, res);
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-  // 1) Get user based on the token
   const hashedToken = crypto
     .createHash('sha256')
     .update(req.params.token)
@@ -162,9 +166,8 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
     return next(new AppError('Token is invalid or has already been used', 400));
   }
 
-  // 2) If token is valid, set isEmailVerified to true
   user.isEmailVerified = true;
-  (user as any).emailVerificationToken = undefined; // Clear the token
+  (user as any).emailVerificationToken = undefined;
   await user.save();
 
   res.status(200).json({
@@ -175,10 +178,9 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response, next: 
 
 export const restrictTo = (...roles: string[]) => {
   return (req: CustomRequest, res: Response, next: NextFunction) => {
-    // roles ['admin', 'lead-guide']. role='user'
     if (!req.user || !roles.includes(req.user.role)) {
       return next(
-        new AppError('You do not have permission to perform this action', 403) // 403 Forbidden
+        new AppError('You do not have permission to perform this action', 403)
       );
     }
     next();
