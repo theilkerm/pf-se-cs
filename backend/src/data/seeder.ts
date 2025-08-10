@@ -9,7 +9,8 @@ import Category from '../models/category.model.js';
 import Review from '../models/review.model.js';
 import Order from '../models/order.model.js';
 
-dotenv.config({ path: './.env' });
+// Bu komut, package.json'daki --env-file bayrağı sayesinde artık zorunlu değil
+// ama kalmasında bir sakınca yok.
 dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI;
@@ -72,7 +73,7 @@ const importData = async () => {
         console.log(`${createdUsers.length} users created successfully.`);
 
 
-        // --- Create the 8 specific categories from the document ---
+        // --- PDF'teki 8 Kategoriyi Oluştur ---
         const specificCategories = [
             { name: 'Electronics', description: 'Gadgets and devices' },
             { name: 'Clothing', description: 'Apparel and accessories' },
