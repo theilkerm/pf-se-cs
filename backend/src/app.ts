@@ -22,6 +22,15 @@ import wishlistRouter from './routes/wishlist.routes.js';
 const app = express();
 
 /* ----------------------------- Security/CORS ----------------------------- */
+// Handle CORS preflight requests BEFORE any other middleware
+app.options('*', (req, res) => {
+  console.log('OPTIONS request received:', req.method, req.url);
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.status(204).end();
+});
+
 // Enable CORS for all routes
 app.use(cors({
   origin: '*', // Allow all origins
@@ -33,17 +42,12 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Additional CORS headers for preflight requests
+// Additional CORS headers for all requests
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(204);
-  } else {
-    next();
-  }
+  next();
 });
 
 // Rate limit (generic). İstersen /auth/login için ayrı limiter ekleyebilirsin.
@@ -52,6 +56,7 @@ const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.method === 'OPTIONS', // Skip rate limiting for OPTIONS requests
 });
 app.use('/api', apiLimiter);
 
