@@ -1,145 +1,186 @@
-Full-Stack E-Ticaret Platformu
+# Full-Stack E-Commerce Platform
 
-Bu proje, "Software Engineer Case Study" kapsamında geliştirilmiş modern ve tam donanımlı bir e-ticaret platformudur. Next.js (React) ve Node.js (Express) teknolojileri kullanılarak monorepo yapısında geliştirilmiştir. Platform, hem son kullanıcılar için zengin bir alışveriş deneyimi sunar hem de yöneticiler için kapsamlı bir yönetim paneli içerir.
-✨ Temel Özellikler
-Müşteri Arayüzü
+A modern, full-featured e-commerce platform built with Next.js (React) and Node.js (Express) in a monorepo structure. This platform provides both a rich shopping experience for customers and a comprehensive management panel for administrators.
 
-    Kullanıcı Yönetimi: JWT tabanlı güvenli kullanıcı kaydı, girişi, e-posta doğrulama ve şifre sıfırlama.
+## ✨ Key Features
 
-    Ürün Keşfi: Kategoriye ve fiyata göre filtreleme, sıralama ve anlık arama özellikleri.
+### Customer Interface
+- **User Management**: JWT-based secure user registration, login, email verification, and password reset
+- **Product Discovery**: Advanced filtering by category and price, real-time search functionality
+- **Detailed Product Pages**: Multiple product images, variants (color, size), stock status, and user reviews
+- **Shopping Cart**: Add, remove, and update product quantities with real-time updates
+- **Order Process**: Streamlined checkout with saved address book integration
+- **User Dashboard**: Profile management, address book, and order history tracking
+- **Wishlist**: Save favorite products for future purchases
+- **Review System**: Rate and review purchased products (1-5 stars)
 
-    Detaylı Ürün Sayfaları: Çoklu ürün görselleri, varyantlar (renk, beden), stok durumu ve kullanıcı yorumları.
+### Admin Panel
+- **Dashboard**: Interactive charts showing sales trends, order status distribution, and key metrics
+- **Product Management**: Full CRUD operations for products including images, variants, stock, and tags
+- **Order Management**: View all orders and update fulfillment status (Processing → Shipped → Delivered)
+- **Category Management**: Add, edit, and manage product categories
+- **Customer Management**: View and search all registered customers
+- **Review Management**: Approve or delete customer-submitted reviews
 
-    Alışveriş Sepeti: Sepete ürün ekleme, çıkarma ve miktar güncelleme.
+## 🛠️ Technology Stack
 
-    Sipariş Süreci: Kayıtlı adres defterinden adres seçimi ile kolaylaştırılmış sipariş verme.
+| Area | Technology |
+|------|------------|
+| **Frontend** | Next.js 15 (App Router), React 18, TypeScript, Tailwind CSS, React Hook Form, Zod, Chart.js, React Context |
+| **Backend** | Node.js, Express.js, TypeScript, MongoDB, Mongoose, JWT, Zod, Multer, Nodemailer, Jest, Supertest |
+| **General** | Docker, Docker Compose, ESLint, TypeScript |
 
-    Kullanıcı Paneli: Profil bilgilerini güncelleme, adres defterini yönetme ve sipariş geçmişini görüntüleme.
+## 🚀 Quick Start
 
-    İstek Listesi: Beğenilen ürünleri daha sonra satın almak üzere kaydetme.
+The easiest way to run the entire project (frontend, backend, database) is using Docker.
 
-    Değerlendirme Sistemi: Satın alınan ürünlere 1-5 arası puan verme ve yorum yapma.
+### Prerequisites
+- Git
+- Docker and Docker Compose
 
-Yönetim (Admin) Paneli
+### Installation Steps
 
-    Dashboard: Satışlar, sipariş durumları ve diğer önemli metrikleri gösteren interaktif grafikler.
+1. **Clone the Repository**
+   ```bash
+   git clone <your-repository-url>
+   cd pf-se-cs
+   ```
 
-    Ürün Yönetimi: Yeni ürün ekleme, mevcut ürünleri düzenleme (görsel, stok, varyant, etiket) ve silme.
+2. **Configure Backend Environment**
+   ```bash
+   cd backend
+   cp .env.example .env
+   # Edit .env with your configuration
+   cd ..
+   ```
 
-    Sipariş Yönetimi: Tüm siparişleri listeleme ve sipariş durumunu güncelleme (örn: "İşleniyor" -> "Kargolandı").
+3. **Configure Frontend Environment**
+   ```bash
+   cd frontend
+   echo "NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1" > .env.local
+   cd ..
+   ```
 
-    Kategori Yönetimi: Sistemdeki ürün kategorilerini ekleme, düzenleme ve silme.
+4. **Start All Services**
+   ```bash
+   docker-compose up -d --build
+   ```
 
-    Müşteri Yönetimi: Kayıtlı tüm müşterileri listeleme ve arama.
+5. **Access the Application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5000
 
-    Yorum Yönetimi: Kullanıcılar tarafından yapılan ürün yorumlarını onaylama veya silme.
+## 🧪 Testing & Data Management
 
-🛠️ Teknoloji Yığını
+### Demo Users
+After seeding the database, you can use these test accounts:
 
-Proje, modern ve ölçeklenebilir teknolojiler kullanılarak geliştirilmiştir.
+- **Admin User**
+  - Email: admin@example.com
+  - Password: password123
 
-Alan
-	
+- **Customer User**
+  - Email: ilker@example.com
+  - Password: password123
 
-Teknoloji
-
-Frontend
-	
-
-Next.js (App Router), React, TypeScript, Tailwind CSS, React Hook Form, Zod, Chart.js, React Context
-
-Backend
-	
-
-Node.js, Express.js, TypeScript, MongoDB, Mongoose, JWT, Zod, Multer, Nodemailer, Jest, Supertest
-
-Genel
-	
-
-Docker, Docker Compose, ESLint
-🚀 Projeyi Çalıştırma
-
-Projenin tamamını (frontend, backend, veritabanı) yerel makinenizde çalıştırmanın en kolay yolu Docker kullanmaktır.
-Ön Gereksinimler
-
-    Git
-
-    Docker ve Docker Compose
-
-Kurulum Adımları
-
-    Projeyi Klonlayın:
-
-    git clone <proje-github-linki>
-    cd pf-se-cs
-
-    Backend Ortam Değişkenlerini Ayarlayın:
-    backend klasörüne gidin, .env.example dosyasını kopyalayarak .env adında yeni bir dosya oluşturun ve içeriğini düzenleyin.
-
-    cd backend
-    cp .env.example .env
-
-        Not: Docker ile çalışırken MONGO_URI değişkeninin mongodb://mongodb:27017/e-commerce-db olarak ayarlandığından emin olun.
-
-    Frontend Ortam Değişkenlerini Ayarlayın:
-    frontend klasörüne gidin ve .env.local adında bir dosya oluşturun.
-
-    cd ../frontend
-    touch .env.local
-
-    Oluşturduğunuz .env.local dosyasının içine aşağıdaki satırı ekleyin:
-
-    NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
-
-    Tüm Servisleri Başlatın:
-    Projenin ana dizinine geri dönün ve Docker Compose'u çalıştırın.
-
-    cd ..
-    docker-compose up -d --build
-
-    Bu komut, gerekli imajları oluşturacak ve tüm servisleri (frontend, backend, mongodb) arka planda başlatacaktır.
-
-    Frontend Arayüzü: http://localhost:3000
-
-    Backend API: http://localhost:5000
-
-🧪 Test ve Veri Yönetimi
-Demo Kullanıcı Bilgileri
-
-Uygulamayı test etmek için aşağıdaki hazır kullanıcıları kullanabilirsiniz. (Önce veritabanını seed etmeniz gerekmektedir).
-
-    Admin Kullanıcısı:
-
-        E-posta: admin@example.com
-
-        Şifre: password123
-
-    Müşteri Kullanıcısı:
-
-        E-posta: ilker@example.com
-
-        Şifre: password123
-
-Veritabanını Doldurma (Seeding)
-
-Veritabanını rastgele ve anlamlı verilerle doldurmak için aşağıdaki komutu projenin ana dizininde çalıştırın:
-
+### Database Operations
+```bash
+# Seed database with sample data
 docker-compose exec backend npm run seed:import
 
-Veritabanındaki tüm verileri temizlemek için:
-
+# Clear all data
 docker-compose exec backend npm run seed:delete
 
-Backend Testlerini Çalıştırma
-
-Backend API'si için yazılmış olan testleri çalıştırmak için projenin ana dizininde aşağıdaki komutu çalıştırın:
-
+# Run backend tests
 docker-compose exec backend npm test
+```
 
-📂 Daha Fazla Bilgi
+## 📁 Project Structure
 
-Projenin frontend ve backend katmanları hakkında daha detaylı teknik bilgi için ilgili klasörlerdeki README.md dosyalarını inceleyebilirsiniz:
+```
+pf-se-cs/
+├── backend/                 # Node.js + Express API
+│   ├── src/
+│   │   ├── controllers/    # Route handlers
+│   │   ├── models/         # MongoDB schemas
+│   │   ├── routes/         # API endpoints
+│   │   ├── middleware/     # Custom middleware
+│   │   └── utils/          # Utility functions
+│   └── Dockerfile
+├── frontend/               # Next.js application
+│   ├── src/
+│   │   ├── app/           # App Router pages
+│   │   ├── components/    # Reusable UI components
+│   │   ├── context/       # React Context providers
+│   │   ├── lib/           # Utility functions
+│   │   ├── schemas/       # Zod validation schemas
+│   │   └── types/         # TypeScript type definitions
+│   └── Dockerfile
+├── docker-compose.yml      # Multi-service orchestration
+└── README.md              # This file
+```
 
-    Backend README
+## 🔧 Development
 
-    Frontend README
+### Running Individual Services
+
+**Backend Only:**
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+**Frontend Only:**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Building for Production
+
+**Frontend:**
+```bash
+cd frontend
+npm run build
+npm start
+```
+
+**Backend:**
+```bash
+cd backend
+npm run build
+npm start
+```
+
+## 📚 Documentation
+
+For more detailed information about each component:
+
+- [Backend README](backend/README.md) - API documentation, endpoints, and backend setup
+- [Frontend README](frontend/README.md) - Component structure, routing, and frontend setup
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues or have questions:
+
+1. Check the existing documentation
+2. Review the issue tracker
+3. Create a new issue with detailed information about your problem
+
+---
+
+**Built with ❤️ using modern web technologies**

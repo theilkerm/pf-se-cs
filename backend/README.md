@@ -29,6 +29,15 @@ The API is designed to be scalable, secure, and easy to integrate with any clien
 -   **Product Reviews and Ratings:**
     -   Authenticated users can submit reviews and a 1-5 star rating for products they have purchased.
     -   Product pages can display an average rating and a list of all reviews.
+-   **Wishlist Management:**
+    -   Users can add/remove products to/from their wishlist.
+    -   View and manage wishlist items.
+-   **Newsletter Subscription:**
+    -   Public endpoint for users to subscribe to newsletters.
+    -   Admin management of subscribers.
+-   **Dashboard Analytics:**
+    -   Sales trends and order status distribution for admin dashboard.
+    -   Related products suggestions.
 -   **Robust Infrastructure:**
     -   Centralized error handling middleware.
     -   Input validation for incoming requests using `zod`.
@@ -44,7 +53,9 @@ The API is designed to be scalable, secure, and easy to integrate with any clien
 -   **File Uploads:** Multer
 -   **Validation:** Zod
 -   **Email Service:** Nodemailer
+-   **Testing:** Jest, Supertest
 -   **Containerization:** Docker & Docker Compose
+-   **Language:** TypeScript
 
 ## 4. Setup and Installation
 
@@ -76,7 +87,7 @@ Now, open the `.env` file and fill in the required values.
 # Application Configuration
 NODE_ENV=development
 PORT=5000
-DATABASE_URL=mongodb://mongodb:27017/ecommerce-db
+MONGO_URI=mongodb://mongodb:27017/e-commerce-db
 FRONTEND_URL=http://localhost:3000
 
 # JWT Secrets
@@ -90,7 +101,8 @@ EMAIL_USERNAME=your_mailtrap_username
 EMAIL_PASSWORD=your_mailtrap_password
 EMAIL_FROM=My E-Commerce <noreply@ecommerce.com>
 ```
-**Note:** For the `DATABASE_URL`, `mongodb` is the name of the service defined in `docker-compose.yml`. If you are not using Docker, replace it with `localhost` or your MongoDB host address.
+
+**Note:** For the `MONGO_URI`, `mongodb` is the name of the service defined in `docker-compose.yml`. If you are not using Docker, replace it with `localhost` or your MongoDB host address.
 
 ### Step 3: Run the Application
 
@@ -160,7 +172,9 @@ The base URL for all API routes is `/api/v1`.
 | `POST` | `/`                         | Create a new product.                        | Admin   |
 | `PATCH`| `/:id`                      | Update an existing product.                  | Admin   |
 | `DELETE`| `/:id`                      | Delete a product.                            | Admin   |
+| `GET`  | `/:productId/reviews`       | Get reviews for a specific product.          | Public  |
 | `POST` | `/:productId/reviews`       | Add a review to a product.                   | Private |
+| `GET`  | `/:productId/related`       | Get related products.                        | Public  |
 
 ### Categories (`/categories`)
 
@@ -186,5 +200,183 @@ The base URL for all API routes is `/api/v1`.
 | :----- | :-------------------------- | :------------------------------------------- | :------ |
 | `GET`  | `/my-orders`                | Get the order history for the logged-in user.| Private |
 | `POST` | `/`                         | Create a new order from the cart.            | Private |
+| `GET`  | `/:id`                      | Get a specific order by ID.                  | Private/Admin |
 | `GET`  | `/`                         | Get a list of all orders in the system.      | Admin   |
 | `PATCH`| `/:id`                      | Update the status of an order.               | Admin   |
+
+### Wishlist (`/wishlist`)
+
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/`                         | Get the user's wishlist.                     | Private |
+| `POST` | `/`                         | Add a product to the wishlist.               | Private |
+| `DELETE`| `/:productId`               | Remove a product from the wishlist.          | Private |
+
+### Newsletter (`/newsletter`)
+
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `POST` | `/subscribe`                | Subscribe to the newsletter.                 | Public  |
+| `GET`  | `/subscribers`               | Get all newsletter subscribers.              | Admin   |
+| `DELETE`| `/subscribers/:id`           | Remove a subscriber.                         | Admin   |
+
+### Dashboard (`/dashboard`)
+
+| Method | Endpoint                    | Description                                  | Access  |
+| :----- | :-------------------------- | :------------------------------------------- | :------ |
+| `GET`  | `/stats`                    | Get dashboard statistics and charts data.    | Admin   |
+
+## 6. Data Models
+
+### User Model
+```typescript
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: 'customer' | 'admin';
+  isEmailVerified: boolean;
+  addresses: Address[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Product Model
+```typescript
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  images: string[];
+  variants: Variant[];
+  tags: string[];
+  isFeatured: boolean;
+  stock: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+### Order Model
+```typescript
+interface Order {
+  _id: string;
+  user: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  shippingAddress: Address;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+## 7. Error Handling
+
+The API uses a centralized error handling system with consistent error responses:
+
+```typescript
+interface ApiError {
+  message: string;
+  status?: number;
+}
+```
+
+Common HTTP status codes:
+- `200` - Success
+- `201` - Created
+- `400` - Bad Request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not Found
+- `500` - Internal Server Error
+
+## 8. Testing
+
+### Running Tests
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Test Structure
+- **Unit Tests**: Individual function and middleware testing
+- **Integration Tests**: API endpoint testing with Supertest
+- **Test Files**: Located in `src/__tests__/` directory
+
+## 9. Development Scripts
+
+```bash
+# Development
+npm run dev          # Start development server with nodemon
+npm run build        # Build TypeScript to JavaScript
+npm start            # Start production server
+
+# Testing
+npm test             # Run tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Run tests with coverage
+
+# Database
+npm run seed:import  # Import sample data
+npm run seed:delete  # Clear all data
+```
+
+## 10. Docker
+
+### Building the Image
+```bash
+docker build -t ecommerce-backend .
+```
+
+### Running with Docker Compose
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f backend
+
+# Stop services
+docker-compose down
+```
+
+## 11. Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Application environment | `development` |
+| `PORT` | Server port | `5000` |
+| `MONGO_URI` | MongoDB connection string | `mongodb://localhost:27017/e-commerce-db` |
+| `JWT_SECRET` | JWT signing secret | Required |
+| `JWT_EXPIRES_IN` | JWT expiration time | `90d` |
+| `EMAIL_HOST` | SMTP host | Required |
+| `EMAIL_PORT` | SMTP port | Required |
+| `EMAIL_USERNAME` | SMTP username | Required |
+| `EMAIL_PASSWORD` | SMTP password | Required |
+
+## 12. Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 13. License
+
+This project is licensed under the MIT License - see the [LICENSE](../LICENSE) file for details.
+
+---
+
+**Built with ❤️ using Node.js and Express**
