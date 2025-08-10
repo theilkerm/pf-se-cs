@@ -55,7 +55,7 @@ app.use(xss());
  * hem de "/api/v1/public/*" yolu ile erişilebilir.
  *
  * Böylece frontend’te:
- *   `${NEXT_PUBLIC_API_URL}${product.images[0]}`
+ * `${NEXT_PUBLIC_API_URL}${product.images[0]}`
  * ve product.images[0] == "/public/uploads/xxx.jpg"
  * ile istek attığında (NEXT_PUBLIC_API_URL = ".../api/v1")
  * URL -> ".../api/v1/public/uploads/xxx.jpg" olur ve çalışır.
