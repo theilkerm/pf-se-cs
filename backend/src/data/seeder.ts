@@ -6,50 +6,70 @@ import { faker } from '@faker-js/faker';
 import User from '../models/user.model.js';
 import Product, { IVariant } from '../models/product.model.js';
 import Category from '../models/category.model.js';
+import Review from '../models/review.model.js';
+import Order from '../models/order.model.js';
 
 dotenv.config({ path: './.env' });
+dotenv.config();
 
 const MONGO_URI = process.env.MONGO_URI;
 
 const importData = async () => {
     try {
-        await mongoose.connect(MONGO_URI!);
+        if (!MONGO_URI) {
+            throw new Error('MONGO_URI is not defined. Check your .env file and package.json scripts.');
+        }
+        await mongoose.connect(MONGO_URI);
+        console.log('MongoDB connection successful. Clearing old data...');
 
         // Clear existing data
+        await Order.deleteMany();
+        await Review.deleteMany();
         await Product.deleteMany();
         await Category.deleteMany();
         await User.deleteMany();
         
-        console.log('Old data cleared...');
+        console.log('Old data cleared.');
 
         // --- Create Users ---
-        const users = [];
-        // Add one static admin user for easy login
-        users.push({
+        const userCreationPromises = [];
+        userCreationPromises.push(User.create({
             firstName: 'Admin',
             lastName: 'User',
             email: 'admin@example.com',
             password: 'password123',
             role: 'admin',
             isEmailVerified: true,
-        });
-        // Generate 20 random customer users
-        for (let i = 0; i < 20; i++) {
-            users.push({
+        }));
+        
+        userCreationPromises.push(User.create({
+            firstName: 'İlker',
+            lastName: 'Mustafa',
+            email: 'ilker@example.com',
+            password: 'password123',
+            role: 'customer',
+            isEmailVerified: true,
+            addresses: [{
+                street: '123 FSM Bulvarı',
+                city: 'Bursa',
+                state: 'Nilüfer',
+                zipCode: '16110',
+                country: 'Turkey'
+            }]
+        }));
+
+        for (let i = 0; i < 18; i++) {
+            userCreationPromises.push(User.create({
                 firstName: faker.person.firstName(),
                 lastName: faker.person.lastName(),
                 email: faker.internet.email().toLowerCase(),
                 password: 'password123',
                 role: 'customer',
                 isEmailVerified: true,
-            });
+            }));
         }
-        // Use a loop with User.create to ensure pre('save') hooks run
-        console.log('Creating users with hashed passwords...');
-        for (const userData of users) {
-            await User.create(userData);
-        }
-        console.log(`${users.length} users created successfully.`);
+        const createdUsers = await Promise.all(userCreationPromises);
+        console.log(`${createdUsers.length} users created successfully.`);
 
 
         // --- Create the 8 specific categories from the document ---
@@ -64,24 +84,24 @@ const importData = async () => {
             { name: 'Food', description: 'Groceries and specialty foods' },
         ];
         const createdCategories = await Category.insertMany(specificCategories);
-        console.log(`${createdCategories.length} categories created...`);
+        console.log(`${createdCategories.length} categories created.`);
 
 
-        // --- Create Products with Variants ---
+        // --- Create Products ---
         const products = [];
+        const allTags = ['best-seller', 'new-arrival', 'eco-friendly', 'sale', 'premium', 'limited-edition'];
         for (let i = 0; i < 100; i++) {
             const randomCategory = faker.helpers.arrayElement(createdCategories);
-            let variants: IVariant[] = [];
+            const variants: IVariant[] = [];
 
             if (randomCategory.name === 'Clothing') {
                 const sizes = ['S', 'M', 'L', 'XL'];
-                const selectedSizes = faker.helpers.arrayElements(sizes, faker.number.int({ min: 2, max: 4 }));
-                selectedSizes.forEach(size => variants.push({ type: 'Size', value: size, stock: faker.number.int({ min: 5, max: 50 }) }));
-                variants.push({ type: 'Color', value: faker.color.human(), stock: faker.number.int({ min: 5, max: 50 }) });
+                faker.helpers.arrayElements(sizes, { min: 2, max: 4 }).forEach(size => {
+                    variants.push({ type: 'Size', value: size, stock: faker.number.int({ min: 0, max: 50 }) });
+                });
             } else if (randomCategory.name === 'Electronics') {
                 const colors = ['Black', 'White', 'Silver', 'Space Gray'];
-                const selectedColors = faker.helpers.arrayElements(colors, faker.number.int({ min: 2, max: 3 }));
-                selectedColors.forEach(color => {
+                faker.helpers.arrayElements(colors, { min: 1, max: 3 }).forEach(color => {
                     variants.push({ type: 'Color', value: color, stock: faker.number.int({ min: 10, max: 100 }) });
                 });
             }
@@ -92,17 +112,36 @@ const importData = async () => {
                 price: parseFloat(faker.commerce.price({ min: 10, max: 2000 })),
                 category: randomCategory._id,
                 images: [`/uploads/placeholder.jpg`],
-                variants: variants.length > 0 ? variants : [{ type: 'Default', value: 'Standard', stock: faker.number.int({ min: 0, max: 200 }) }]
+                variants: variants.length > 0 ? variants : [{ type: 'Default', value: 'Standard', stock: faker.number.int({ min: 0, max: 200 }) }],
+                tags: faker.helpers.arrayElements(allTags, { min: 1, max: 3 }),
+                isFeatured: Math.random() > 0.8 
             });
         }
-        await Product.insertMany(products);
-        console.log(`${products.length} products with variants created...`);
+        const createdProducts = await Product.insertMany(products);
+        console.log(`${createdProducts.length} products created.`);
         
+        
+        // --- Create Reviews ---
+        const reviews = [];
+        const customerUsers = createdUsers.filter(u => u.role === 'customer');
+        for (const product of createdProducts) {
+            const reviewCount = faker.number.int({ min: 0, max: 5 });
+            for (let i = 0; i < reviewCount; i++) {
+                const randomUser = faker.helpers.arrayElement(customerUsers);
+                reviews.push({
+                    comment: faker.lorem.sentence(),
+                    rating: faker.number.int({ min: 1, max: 5 }),
+                    product: product._id,
+                    user: randomUser._id,
+                });
+            }
+        }
+        await Review.insertMany(reviews);
+        console.log(`${reviews.length} reviews created.`);
+
+
         console.log('---------------------------');
         console.log('Data Imported Successfully!');
-        console.log('---------------------------');
-        console.log('Admin Login: admin@example.com');
-        console.log('Password: password123');
         console.log('---------------------------');
 
         process.exit();
@@ -114,8 +153,13 @@ const importData = async () => {
 
 const deleteData = async () => {
     try {
-        await mongoose.connect(MONGO_URI!);
+        if (!MONGO_URI) {
+            throw new Error('MONGO_URI is not defined.');
+        }
+        await mongoose.connect(MONGO_URI);
 
+        await Order.deleteMany();
+        await Review.deleteMany();
         await Product.deleteMany();
         await Category.deleteMany();
         await User.deleteMany();
@@ -128,7 +172,6 @@ const deleteData = async () => {
     }
 };
 
-// Check for command line arguments to decide which function to run
 if (process.argv[2] === '--import') {
     importData();
 } else if (process.argv[2] === '--delete') {
