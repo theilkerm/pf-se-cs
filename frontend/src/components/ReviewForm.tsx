@@ -23,7 +23,7 @@ export default function ReviewForm({ productId }: ReviewFormProps) {
         if (rating === 0) return setError("Please select a rating.");
 
         try {
-            await fetcher('/api/v1/reviews', {
+            await fetcher('/reviews', {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ productId, rating, comment })

@@ -85,7 +85,7 @@ const NewsletterSignup = () => {
         setLoading(true);
         setMessage('');
         try {
-            const response = await fetcher('/api/v1/newsletter', {
+            const response = await fetcher('/newsletter', {
                 method: 'POST',
                 body: JSON.stringify({ email })
             });
@@ -142,7 +142,7 @@ export default function HomePage() {
   useEffect(() => {
     const getCategories = async () => {
       try {
-        const catData = await fetcher('/api/v1/categories');
+        const catData = await fetcher('/categories');
         setCategories(catData.data.categories);
       } catch (error) { console.error("Failed to fetch categories:", error); }
     };

@@ -30,7 +30,7 @@ export default function WishlistPage() {
       }
       try {
         setLoading(true);
-        const data = await fetcher('/api/v1/products/by-ids', {
+        const data = await fetcher('/products/by-ids', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
           body: JSON.stringify({ ids: wishlist })
