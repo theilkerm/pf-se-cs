@@ -7,8 +7,6 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      # Mount the src folder for hot-reloading
-      - ./backend/src:/app/src
       - uploads-data:/app/public/uploads
     env_file:
       - ./backend/.env
@@ -21,7 +19,7 @@ services:
     networks:
       - ecom-network
 
-  # Frontend Service (Next.js)
+  # Frontend Service (Next.js Production)
   frontend:
     build:
       context: ./frontend

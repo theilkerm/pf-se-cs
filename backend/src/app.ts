@@ -23,7 +23,11 @@ const app = express();
 
 /* ----------------------------- Security/CORS ----------------------------- */
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: [
+    'http://localhost:3000',
+    'http://159.89.7.177:3000',
+    'http://159.89.7.177'
+  ],
   credentials: true,
 }));
 

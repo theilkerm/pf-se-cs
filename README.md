@@ -62,8 +62,15 @@ The easiest way to run the entire project (frontend, backend, database) is using
    ```
 
 4. **Start All Services**
+
+   **Development:**
    ```bash
    docker-compose up -d --build
+   ```
+
+   **Production:**
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d --build
    ```
 
 5. **Access the Application**

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
@@ -11,6 +12,7 @@ const nextConfig = {
         hostname: 'placehold.jp',
       },
       { protocol: 'http', hostname: 'localhost', port: '3001' },
+      { protocol: 'http', hostname: '159.89.7.177', port: 3001 },
     ],
   },
 };
