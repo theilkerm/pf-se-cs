@@ -22,14 +22,7 @@ import wishlistRouter from './routes/wishlist.routes.js';
 const app = express();
 
 /* ----------------------------- Security/CORS ----------------------------- */
-app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://159.89.7.177:3000',
-    'http://159.89.7.177'
-  ],
-  credentials: true,
-}));
+app.use(cors());
 
 // Rate limit (generic). İstersen /auth/login için ayrı limiter ekleyebilirsin.
 const apiLimiter = rateLimit({
