@@ -23,6 +23,9 @@ function buildUrl(endpoint: string) {
  */
 export async function fetcher(endpoint: string, options: RequestInit = {}) {
   const url = buildUrl(endpoint);
+  
+  // Debug logging
+  console.log('Fetcher called with:', { endpoint, url, baseUrl: process.env.NEXT_PUBLIC_API_URL });
 
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
