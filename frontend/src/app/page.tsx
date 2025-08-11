@@ -149,6 +149,15 @@ export default function HomePage() {
     getCategories();
   }, []);
 
+  // Set default limit if not present in URL
+  useEffect(() => {
+    if (!searchParams.get('limit')) {
+      const current = new URLSearchParams(searchParams.toString());
+      current.set('limit', '12');
+      router.replace(`${pathname}?${current.toString()}`);
+    }
+  }, [searchParams, router, pathname]);
+
   useEffect(() => {
     const getProducts = async () => {
       try {
@@ -243,6 +252,11 @@ export default function HomePage() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">{searchTerm ? `Search Results for "${searchTerm}"` : 'Products'}</h2>
               <div className="flex items-center gap-4">
+                <select onChange={(e) => handleFilterChange('limit', e.target.value)} value={searchParams.get('limit') || '12'} className="border p-2 rounded">
+                  <option value="12">12 per page</option>
+                  <option value="24">24 per page</option>
+                  <option value="48">48 per page</option>
+                </select>
                 <select onChange={(e) => handleFilterChange('sort', e.target.value)} value={searchParams.get('sort') || ''} className="border p-2 rounded">
                   <option value="">Sort by (Newest)</option>
                   <option value="price-asc">Price: Low to High</option>

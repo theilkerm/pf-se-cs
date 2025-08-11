@@ -48,7 +48,7 @@ export const getAllProducts = catchAsync(async (req: CustomRequest, res: Respons
     }
 
     const page = parseInt(req.query.page as string, 10) || 1;
-    const limit = parseInt(req.query.limit as string, 10) || 1000; // Increased limit for admin view
+    const limit = parseInt(req.query.limit as string, 10) || 12; // Default to 12 products per page
     const skip = (page - 1) * limit;
 
     const products = await Product.find(filter).sort(sort).skip(skip).limit(limit).populate('category');
