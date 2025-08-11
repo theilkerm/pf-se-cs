@@ -1,14 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
-import User, { IUser } from '../models/user.model.js';
+import User from '../models/user.model.js';
 import Product from '../models/product.model.js';
 import AppError from '../utils/appError.js';
+import { IProduct } from '../models/product.model.js';
 
 interface CustomRequest extends Request {
-  user?: IUser;
+  user?: any;
 }
 
 const catchAsync = (fn: Function) => {
-  return (req: CustomRequest, res: Response, next: NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     fn(req, res, next).catch(next);
   };
 };
@@ -18,12 +19,12 @@ const catchAsync = (fn: Function) => {
 const findUserById = async (userId: string) => {
   const user = await User.findById(userId);
   if (!user) {
-    throw new AppError('User for this token not found.', 404);
+    throw new AppError('User not found', 404);
   }
   return user;
 };
 
-const findProductById = async (productId: string) => {
+const findProductById = async (productId: string): Promise<IProduct> => {
   const product = await Product.findById(productId);
   if (!product) {
     throw new AppError('Product not found', 404);
@@ -31,9 +32,9 @@ const findProductById = async (productId: string) => {
   return product;
 };
 
-const checkStockAvailability = (product: any, user: any, requestedQuantity: number, variant: any) => {
+const checkStockAvailability = (product: IProduct, user: any, requestedQuantity: number, variant: any) => {
   const itemIndex = user.cart.findIndex((item: any) => 
-    item.product.toString() === product._id.toString() &&
+    item.product.toString() === (product._id as any).toString() &&
     item.variant?.value === variant.value &&
     item.variant?.type === variant.type
   );
@@ -47,11 +48,11 @@ const checkStockAvailability = (product: any, user: any, requestedQuantity: numb
   return { itemIndex, totalQuantity };
 };
 
-const updateUserCart = (user: any, product: any, quantity: number, itemIndex: number, totalQuantity: number, variant: any) => {
+const updateUserCart = (user: any, product: IProduct, quantity: number, itemIndex: number, totalQuantity: number, variant: any) => {
   if (itemIndex > -1) {
     user.cart[itemIndex].quantity = totalQuantity;
   } else {
-    user.cart.push({ product: product._id, quantity, price: product.price, variant });
+    user.cart.push({ product: (product._id as any), quantity, price: product.price, variant });
   }
   return user.save({ validateBeforeSave: false });
 };
@@ -62,7 +63,7 @@ const updateUserCart = (user: any, product: any, quantity: number, itemIndex: nu
 export const getCart = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
   const user = await User.findById(req.user!._id).populate({
     path: 'cart.product',
-    select: 'name images price stock variants'
+    select: 'name images price variants'
   });
   if (!user) { return next(new AppError('User not found', 404)); }
   res.status(200).json({ status: 'success', data: { cart: user.cart } });
@@ -73,7 +74,7 @@ export const addItemToCart = catchAsync(async (req: CustomRequest, res: Response
     if (!variant || !variant.type || !variant.value) { return next(new AppError('Please select a product variant.', 400)); }
     
     const user = await findUserById(req.user!._id);
-    const product = await findProductById(productId);
+    const product = await findProductById(productId as string);
     const { itemIndex, totalQuantity } = checkStockAvailability(product, user, quantity, variant);
     
     await updateUserCart(user, product, quantity, itemIndex, totalQuantity, variant);
@@ -95,7 +96,7 @@ export const updateItemQuantity = catchAsync(async (req: CustomRequest, res: Res
     );
 
     if (itemIndex > -1) {
-        const product = await findProductById(productId);
+        const product = await findProductById(productId as string);
         const productVariant = product.variants.find((v: any) => v.value === variant.value && v.type === variant.type);
 
         if (!productVariant || productVariant.stock < quantity) {
@@ -108,7 +109,7 @@ export const updateItemQuantity = catchAsync(async (req: CustomRequest, res: Res
     }
 
     await user.save({ validateBeforeSave: false });
-    await user.populate({ path: 'cart.product', select: 'name images price stock variants' });
+    await user.populate({ path: 'cart.product', select: 'name images price variants' });
 
     res.status(200).json({ status: 'success', data: { cart: user.cart } });
 });

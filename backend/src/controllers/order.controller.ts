@@ -46,10 +46,10 @@ export const createOrder = catchAsync(async (req: CustomRequest, res: Response, 
         totalPrice,
     });
 
-    for (const item of order.orderItems) {
+    for (const item of (order.orderItems as any[])) {
         if (item.variant) {
              await Product.updateOne(
-                { _id: item.product, 'variants.value': item.variant.value, 'variants.type': item.variant.type },
+                { _id: item.product, 'variants.value': (item.variant as any).value, 'variants.type': (item.variant as any).type },
                 { $inc: { 'variants.$.stock': -item.quantity } }
             );
         }
@@ -77,7 +77,7 @@ export const getOrderById = catchAsync(async (req: CustomRequest, res: Response,
     if (!order) {
         return next(new AppError('Order not found with that ID', 404));
     }
-    if (order.user.toString() !== req.user!._id.toString()) {
+    if (order.user.toString() !== (req.user!._id as any).toString()) {
         return next(new AppError('Not authorized to view this order', 403));
     }
     

@@ -1,0 +1,28 @@
+# Stage 1: Builder - Kodun derlendiği aşama
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Runner - Sadece derlenmiş kodun çalıştığı aşama
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Sadece production için gerekli bağımlılıkları kur
+COPY package*.json ./
+RUN npm install --omit=dev
+
+# Derlenmiş kodu kopyala
+COPY --from=builder /app/dist ./dist
+
+# Uygulamanın çalışacağı portu aç
+EXPOSE 3001
+
+# Uygulamayı production modunda başlat
+CMD ["npm", "run", "start"]

@@ -40,10 +40,10 @@ describe('Order Routes - /api/v1/orders', () => {
         const category = await Category.create({ name: 'Order Test Category' });
         testProduct = await Product.create({
             name: 'Product for Order',
-            description: 'A product for the order test', // <-- EKSİK OLAN SATIR BURAYA EKLENDİ
+            description: 'A product for the order test',
             price: 100,
             category: category._id,
-            stock: 20
+            variants: [{ type: 'size', value: 'M', stock: 20 }]
         });
     });
 
@@ -68,7 +68,7 @@ describe('Order Routes - /api/v1/orders', () => {
         expect(userAfterOrder!.cart).toHaveLength(0);
 
         const productAfterOrder = await Product.findById(testProduct._id);
-        expect(productAfterOrder!.stock).toBe(18);
+        expect(productAfterOrder!.variants[0].stock).toBe(18);
     });
 
     it('POST / - should fail to create an order if the cart is empty', async () => {

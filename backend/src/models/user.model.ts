@@ -15,6 +15,7 @@ export interface IUser extends mongoose.Document {
     lastName: string;
     phone?: string;
     addresses: {
+        _id: mongoose.Types.ObjectId;
         street: string;
         city: string;
         state: string;
@@ -75,6 +76,7 @@ const userSchema = new Schema<IUser>(
         },
         addresses: [
             {
+                _id: { type: Schema.Types.ObjectId, auto: true },
                 street: String,
                 city: String,
                 state: String,

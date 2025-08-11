@@ -138,7 +138,7 @@ export const updateMyPassword = catchAsync(async (req: CustomRequest, res: Respo
     const { currentPassword, password, passwordConfirm } = req.body;
 
     // 1) Get user from collection
-    const user = await User.findById(req.user!.id).select('+password');
+    const user = await User.findById(req.user!._id).select('+password');
 
     // 2) Check if POSTed current password is correct
     if (!user || !(await user.correctPassword(currentPassword, user.password))) {
@@ -159,7 +159,7 @@ export const updateMyPassword = catchAsync(async (req: CustomRequest, res: Respo
 // @route   POST /api/v1/users/me/addresses
 // @access  Private
 export const addAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const user = await User.findById(req.user!.id);
+    const user = await User.findById(req.user!._id);
     if (!user) {
         return next(new AppError('User not found', 404));
     }
@@ -179,17 +179,17 @@ export const addAddress = catchAsync(async (req: CustomRequest, res: Response, n
 // @route   PATCH /api/v1/users/me/addresses/:addressId
 // @access  Private
 export const updateAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const user = await User.findById(req.user!.id);
+    const user = await User.findById(req.user!._id);
     if (!user) {
         return next(new AppError('User not found', 404));
     }
 
-    const address = user.addresses.id(req.params.addressId);
-    if (!address) {
+    const addressIndex = user.addresses.findIndex((addr: any) => addr._id.toString() === req.params.addressId);
+    if (addressIndex === -1) {
         return next(new AppError('Address not found', 404));
     }
 
-    Object.assign(address, req.body);
+    Object.assign(user.addresses[addressIndex], req.body);
     await user.save({ validateBeforeSave: false });
 
     res.status(200).json({
@@ -205,17 +205,17 @@ export const updateAddress = catchAsync(async (req: CustomRequest, res: Response
 // @route   DELETE /api/v1/users/me/addresses/:addressId
 // @access  Private
 export const deleteAddress = catchAsync(async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const user = await User.findById(req.user!.id);
+    const user = await User.findById(req.user!._id);
     if (!user) {
         return next(new AppError('User not found', 404));
     }
     
-    const address = user.addresses.id(req.params.addressId);
-    if (!address) {
+    const addressIndex = user.addresses.findIndex((addr: any) => addr._id.toString() === req.params.addressId);
+    if (addressIndex === -1) {
         return next(new AppError('Address not found', 404));
     }
 
-    (address as any).remove();
+    user.addresses.splice(addressIndex, 1);
     await user.save({ validateBeforeSave: false });
     
     res.status(200).json({
