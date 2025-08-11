@@ -161,16 +161,18 @@ export default function HomePage() {
   useEffect(() => {
     const getProducts = async () => {
       try {
+        console.log('🔄 getProducts called, searchParams:', searchParams.toString());
         setLoading(true);
         const params = new URLSearchParams(searchParams.toString());
         const productsData = await fetcher(`/products?${params.toString()}`);
+        console.log('✅ Products fetched:', productsData);
         setProducts(productsData.data.products);
         setPagination({
           page: productsData.data.page,
           totalPages: productsData.data.totalPages,
         });
       } catch (error) {
-        console.error("Failed to fetch products:", error);
+        console.error("❌ Failed to fetch products:", error);
       } finally {
         setLoading(false);
       }
