@@ -32,8 +32,9 @@ export const register = catchAsync(async (req: Request, res: Response, next: Nex
   await newUser.save({ validateBeforeSave: false });
 
   // Send the verification email
-  // Frontend'deki verify-email sayfasının adresini kullanıyoruz
-  const verificationURL = `http://localhost:3000/verify-email/${verificationToken}`;
+  // Use environment variable for frontend URL
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const verificationURL = `${frontendUrl}/verify-email/${verificationToken}`;
   const message = `Welcome to the E-commerce Platform! Please verify your email by clicking the following link: ${verificationURL}`;
 
   try {
@@ -107,8 +108,9 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response, nex
   const resetToken = (user as any).createPasswordResetToken();
   await user.save({ validateBeforeSave: false });
 
-  // Frontend'deki reset-password sayfasının adresini kullanıyoruz
-  const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+  // Use environment variable for frontend URL
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const resetURL = `${frontendUrl}/reset-password/${resetToken}`;
   const message = `Forgot your password? Click the link to reset it: ${resetURL}.\nIf you didn't forget your password, please ignore this email!`;
 
   try {

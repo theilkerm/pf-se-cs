@@ -46,36 +46,65 @@ The easiest way to run the entire project (frontend, backend, database) is using
    cd pf-se-cs
    ```
 
-2. **Configure Backend Environment**
+2. **Configure Environment (Choose one option)**
+
+   **Option A: Quick Development Setup (Recommended for local development)**
    ```bash
+   # Use the development script (automatically creates .env files)
+   chmod +x dev.sh
+   ./dev.sh
+   ```
+
+   **Option B: Manual Configuration**
+   ```bash
+   # Backend
    cd backend
-   cp .env.example .env
+   cp env.example .env
    # Edit .env with your configuration
    cd ..
-   ```
-
-3. **Configure Frontend Environment**
-   ```bash
+   
+   # Frontend
    cd frontend
-   echo "NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1" > .env.local
+   cp env.example .env.local
+   # Edit .env.local with your configuration
    cd ..
    ```
 
-4. **Start All Services**
+3. **Start All Services**
 
-   **Development:**
+   **Development (with hot reload):**
    ```bash
-   docker-compose up -d --build
+   docker-compose -f docker-compose.dev.yml up --build
    ```
 
    **Production:**
    ```bash
+   # First time setup
+   chmod +x prod.sh
+   ./prod.sh
+   
+   # Or manually
    docker-compose -f docker-compose.prod.yml up -d --build
    ```
 
-5. **Access the Application**
+4. **Access the Application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
+   - MongoDB: localhost:27017
+
+## 🔧 Environment Configuration
+
+### Development Environment
+- Uses `docker-compose.dev.yml` for local development
+- Hot reloading enabled for both frontend and backend
+- Local database and API endpoints
+- Environment variables loaded from `backend/.env` and `frontend/.env.local`
+
+### Production Environment
+- Uses `docker-compose.prod.yml` for production deployment
+- Environment variables can be configured via `.env` file
+- Copy `docker-compose.prod.env` to `.env` and update values
+- Update URLs for your production server domain
 
 ## 🚀 Quick Start (Production)
 

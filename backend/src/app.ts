@@ -32,11 +32,11 @@ app.options('*', (req, res) => {
   res.status(204).end();
 });
 
-/* ----------------------------- Security/CORS ----------------------------- */
-// Enable CORS for all routes - this handles everything including OPTIONS
+// Enable CORS for all routes
+const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({
-  origin: 'http://159.89.7.177:3000', // Be specific about your frontend origin
-  credentials: false,
+  origin: corsOrigin === '*' ? '*' : corsOrigin.split(','),
+  credentials: corsOrigin !== '*', // Enable credentials only when not using wildcard
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Content-Length', 'X-Requested-With'],
@@ -46,7 +46,7 @@ app.use(cors({
 
 // Additional CORS headers for all requests
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', corsOrigin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   next();

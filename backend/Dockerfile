@@ -1,5 +1,5 @@
 # Use a lightweight Node.js image based on Node.js 18
-FROM node:18-alpine
+FROM node:18-bookworm-slim
 
 # Set the working directory inside the container
 WORKDIR /app
