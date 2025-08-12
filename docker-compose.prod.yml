@@ -4,6 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.prod
+    restart: always
     ports:
       - "3001:3001"
     volumes:
@@ -14,6 +15,12 @@ services:
       # Connection string for MongoDB running in another container
       - MONGO_URI=mongodb://mongo:27017/e-commerce-db
       - PORT=3001
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     depends_on:
       - mongo
     networks:
@@ -42,7 +49,7 @@ services:
       - "27017:27017"
     volumes:
       # Persist database data
-      - mongo-data:/data/db
+      - pf-se-cs-mongo-data:/data/db
     networks:
       - ecom-network
 
@@ -53,5 +60,6 @@ networks:
 
 # Define the volume for MongoDB data persistence
 volumes:
-  mongo-data:
+  pf-se-cs-mongo-data:
+    external: true
   uploads-data:

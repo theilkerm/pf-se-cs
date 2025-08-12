@@ -2,6 +2,18 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import app from './app.js'; // Import the Express app from app.ts
 
+// Global error handlers for production stability
+process.on('unhandledRejection', (err: Error) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+});
+
+process.on('uncaughtException', (err: Error) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.error(err.name, err.message);
+  process.exit(1);
+});
+
 // Load environment variables based on the current environment
 if (process.env.NODE_ENV === 'test') {
     dotenv.config({ path: './.env.test' });
@@ -20,7 +32,12 @@ const startServer = async () => {
   }
 
   try {
-    await mongoose.connect(MONGO_URI);
+    const mongooseOptions = {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      heartbeatFrequencyMS: 10000,
+    };
+    await mongoose.connect(MONGO_URI, mongooseOptions);
     console.log(`Successfully connected to MongoDB.`);
 
     app.listen(PORT, () => {

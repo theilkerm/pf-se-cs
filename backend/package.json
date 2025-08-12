@@ -10,12 +10,15 @@
     "dev": "tsx watch src/server.ts",
     "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest --watchAll --runInBand",
     "seed:import": "tsx src/data/seeder.ts --import",
-    "seed:delete": "tsx src/data/seeder.ts --delete"
+    "seed:delete": "tsx src/data/seeder.ts --delete",
+    "seed:prod": "node dist/data/seeder.js --import",
+    "seed:delete:prod": "node dist/data/seeder.js --delete"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "bcryptjs": "^2.4.3",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
@@ -31,7 +34,6 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.9.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/body-parser": "^1.19.6",
     "@types/cors": "^2.8.17",

@@ -77,6 +77,30 @@ The easiest way to run the entire project (frontend, backend, database) is using
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
 
+## 🚀 Quick Start (Production)
+
+To run the entire project in a production-ready state, follow these steps. This method uses a persistent, external volume for the database to prevent data loss.
+
+### Create a Persistent Docker Volume (First time only)
+```bash
+docker volume create pf-se-cs-mongo-data
+```
+
+### Configure Environment Files
+Configure your `.env` file in the backend directory and `.env.local` in the frontend directory as described in the development setup.
+
+### Start All Services
+Use the `docker-compose.prod.yml` file to build and start the services.
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### Seed the Database
+Run the production-safe seeder script.
+```bash
+docker compose -f docker-compose.prod.yml exec backend npm run seed:prod
+```
+
 ## 🧪 Testing & Data Management
 
 ### Demo Users
@@ -100,6 +124,9 @@ docker-compose exec backend npm run seed:delete
 
 # Run backend tests
 docker-compose exec backend npm test
+
+# Production seeding (after building)
+docker compose -f docker-compose.prod.yml exec backend npm run seed:prod
 ```
 
 ## 📁 Project Structure

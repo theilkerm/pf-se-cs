@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import xss from 'xss-clean';
 import path from 'path';
+import mongoose from 'mongoose';
 import AppError from './utils/appError.js';
 
 // Routers
@@ -98,8 +99,18 @@ app.use('/api/v1/newsletter', newsletterRouter);
 app.use('/api/v1/wishlist', wishlistRouter);
 
 /* --------------------------------- Health -------------------------------- */
-app.get('/api/v1/health', (_req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok' });
+app.get('/api/v1/health', async (_req: Request, res: Response) => {
+  try {
+    if (mongoose.connection && mongoose.connection.db) {
+      await mongoose.connection.db.admin().ping();
+      res.status(200).json({ status: 'ok', db: 'connected' });
+    } else {
+      throw new Error('Database connection object not available');
+    }
+  } catch (error) {
+    console.error('Health check failed: DB connection is likely lost.', error);
+    res.status(503).json({ status: 'error', db: 'disconnected' });
+  }
 });
 
 /* ------------------------------ 404 handler ------------------------------ */

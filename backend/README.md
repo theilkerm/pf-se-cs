@@ -110,8 +110,21 @@ EMAIL_FROM=My E-Commerce <noreply@ecommerce.com>
 
 This is the simplest way to get the entire application stack (backend, frontend, and database) running. Navigate to the **root directory** of the project (the one containing `docker-compose.yml`) and run:
 
+**Development:**
 ```bash
 docker-compose up -d --build
+```
+
+**Production:**
+```bash
+# First time only: Create persistent volume
+docker volume create pf-se-cs-mongo-data
+
+# Start production services
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# Seed production database
+docker compose -f docker-compose.prod.yml exec backend npm run seed:prod
 ```
 
 -   The `--build` flag ensures that Docker images are rebuilt if there are any changes.
@@ -119,7 +132,11 @@ docker-compose up -d --build
 
 To view the logs for the backend service:
 ```bash
+# Development
 docker-compose logs -f backend
+
+# Production
+docker compose -f docker-compose.prod.yml logs -f backend
 ```
 
 #### Option B: Running Locally without Docker
@@ -364,6 +381,8 @@ npm test             # Run tests in watch mode
 # Database
 npm run seed:import  # Import sample data
 npm run seed:delete  # Clear all data
+npm run seed:prod    # Production seeding (after building)
+npm run seed:delete:prod  # Production data clearing
 ```
 
 ## 10. Docker
@@ -375,14 +394,16 @@ docker build -t ecommerce-backend .
 
 ### Running with Docker Compose
 ```bash
-# Start all services
+# Development
 docker-compose up -d
-
-# View logs
 docker-compose logs -f backend
-
-# Stop services
 docker-compose down
+
+# Production
+docker volume create pf-se-cs-mongo-data  # First time only
+docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml logs -f backend
+docker-compose -f docker-compose.prod.yml down
 ```
 
 ## 11. Environment Variables
