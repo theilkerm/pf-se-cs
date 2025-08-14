@@ -27,18 +27,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
+        - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001/api/v1}
-    volumes:
-      # Mount source code for hot reloading
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
-      - ./frontend/next.config.ts:/app/next.config.ts
-      - ./frontend/tailwind.config.js:/app/tailwind.config.js
-      - ./frontend/postcss.config.js:/app/postcss.config.js
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
     depends_on:
       - backend
     networks:

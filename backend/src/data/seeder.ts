@@ -21,16 +21,8 @@ const importData = async () => {
             throw new Error('MONGO_URI is not defined. Check your .env file and package.json scripts.');
         }
         await mongoose.connect(MONGO_URI);
-        console.log('MongoDB connection successful. Clearing old data...');
+        console.log('MongoDB connection successful.');
 
-        // Clear existing data
-        await Order.deleteMany();
-        await Review.deleteMany();
-        await Product.deleteMany();
-        await Category.deleteMany();
-        await User.deleteMany();
-        
-        console.log('Old data cleared.');
 
         // --- Create Users ---
         const userCreationPromises = [];
@@ -134,6 +126,7 @@ const importData = async () => {
                     rating: faker.number.int({ min: 1, max: 5 }),
                     product: product._id,
                     user: randomUser._id,
+                    isApproved: faker.datatype.boolean()
                 });
             }
         }

@@ -11,11 +11,27 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'placehold.jp',
       },
-      // Development
-      { protocol: 'http', hostname: 'localhost', port: '3001' },
-      // Production - will be overridden by environment variable
-      { protocol: 'http', hostname: '159.89.7.177', port: '3001' },
+      // Localhost for development
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '3001',
+      },
+      // Backend service for Docker network
+      {
+        protocol: 'http',
+        hostname: 'backend',
+        port: '3001',
+      },
+      // Dynamic configuration based on environment
+      ...(process.env.BACKEND_HOST ? [{
+        protocol: process.env.BACKEND_URL?.startsWith('https') ? 'https' : 'http',
+        hostname: process.env.BACKEND_HOST,
+        port: process.env.BACKEND_PORT,
+      }] : []),
     ],
+    // Use unoptimized images for development to avoid network issues
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   // Enable experimental features for better development experience
   experimental: {

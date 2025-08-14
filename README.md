@@ -21,6 +21,7 @@ A modern, full-featured e-commerce platform built with Next.js (React) and Node.
 - **Category Management**: Add, edit, and manage product categories
 - **Customer Management**: View and search all registered customers
 - **Review Management**: Approve or delete customer-submitted reviews
+- **Newsletter Management**: Manage email subscribers and campaigns
 
 ## 🛠️ Technology Stack
 
@@ -28,7 +29,16 @@ A modern, full-featured e-commerce platform built with Next.js (React) and Node.
 |------|------------|
 | **Frontend** | Next.js 15 (App Router), React 18, TypeScript, Tailwind CSS, React Hook Form, Zod, Chart.js, React Context |
 | **Backend** | Node.js, Express.js, TypeScript, MongoDB, Mongoose, JWT, Zod, Multer, Nodemailer, Jest, Supertest |
+| **Database** | MongoDB with authentication and secure Docker networking |
 | **General** | Docker, Docker Compose, ESLint, TypeScript |
+
+## 🔒 Security Features
+
+- **MongoDB Security**: No public internet exposure, username/password authentication required
+- **Network Isolation**: Database only accessible within Docker network
+- **JWT Authentication**: Secure user sessions with token-based authentication
+- **Input Validation**: Comprehensive validation using Zod schemas
+- **CORS Protection**: Properly configured cross-origin resource sharing
 
 ## 🚀 Quick Start
 
@@ -57,17 +67,11 @@ The easiest way to run the entire project (frontend, backend, database) is using
 
    **Option B: Manual Configuration**
    ```bash
-   # Backend
-   cd backend
+   # Copy environment examples
    cp env.example .env
-   # Edit .env with your configuration
-   cd ..
    
-   # Frontend
-   cd frontend
-   cp env.example .env.local
-   # Edit .env.local with your configuration
-   cd ..
+   # Edit .env with your configuration
+   nano .env
    ```
 
 3. **Start All Services**
@@ -77,7 +81,7 @@ The easiest way to run the entire project (frontend, backend, database) is using
    docker-compose -f docker-compose.dev.yml up --build
    ```
 
-   **Production:**
+   **Production (with security):**
    ```bash
    # First time setup
    chmod +x prod.sh
@@ -90,7 +94,7 @@ The easiest way to run the entire project (frontend, backend, database) is using
 4. **Access the Application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:3001
-   - MongoDB: localhost:27017
+   - MongoDB: localhost:27017 (development only)
 
 ## 🔧 Environment Configuration
 
@@ -98,37 +102,42 @@ The easiest way to run the entire project (frontend, backend, database) is using
 - Uses `docker-compose.dev.yml` for local development
 - Hot reloading enabled for both frontend and backend
 - Local database and API endpoints
-- Environment variables loaded from `backend/.env` and `frontend/.env.local`
+- Environment variables loaded from `.env`
 
 ### Production Environment
 - Uses `docker-compose.prod.yml` for production deployment
-- Environment variables can be configured via `.env` file
-- Copy `docker-compose.prod.env` to `.env` and update values
+- **Secure MongoDB**: No public exposure, authentication required
+- Environment variables configured via `.env` file
+- Copy `env.production.example` to `.env` and update values
 - Update URLs for your production server domain
 
-## 🚀 Quick Start (Production)
+## 🚀 Production Deployment
 
-To run the entire project in a production-ready state, follow these steps. This method uses a persistent, external volume for the database to prevent data loss.
+### Security Features
+- **MongoDB**: No public internet access, authentication required
+- **Network Isolation**: Only backend container can connect to database
+- **Automatic Setup**: Database users created automatically on first startup
 
-### Create a Persistent Docker Volume (First time only)
-```bash
-docker volume create pf-se-cs-mongo-data
-```
+### Deployment Steps
+1. **Configure Production Environment**
+   ```bash
+   cp env.production.example .env
+   # Edit .env with secure MongoDB credentials
+   ```
 
-### Configure Environment Files
-Configure your `.env` file in the backend directory and `.env.local` in the frontend directory as described in the development setup.
+2. **Deploy Secure Stack**
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d --build
+   ```
 
-### Start All Services
-Use the `docker-compose.prod.yml` file to build and start the services.
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
+3. **Verify Security**
+   ```bash
+   # Check MongoDB is not exposed publicly
+   netstat -tlnp | grep 27017
+   # Should show no results
+   ```
 
-### Seed the Database
-Run the production-safe seeder script.
-```bash
-docker compose -f docker-compose.prod.yml exec backend npm run seed:prod
-```
+For detailed production deployment instructions, see [MONGODB_SECURITY.md](MONGODB_SECURITY.md).
 
 ## 🧪 Testing & Data Management
 
@@ -168,7 +177,9 @@ pf-se-cs/
 │   │   ├── models/         # MongoDB schemas
 │   │   ├── routes/         # API endpoints
 │   │   ├── middleware/     # Custom middleware
-│   │   └── utils/          # Utility functions
+│   │   ├── schemas/        # Validation schemas
+│   │   ├── utils/          # Utility functions
+│   │   └── __tests__/      # Test files
 │   └── Dockerfile
 ├── frontend/               # Next.js application
 │   ├── src/
@@ -179,8 +190,11 @@ pf-se-cs/
 │   │   ├── schemas/       # Zod validation schemas
 │   │   └── types/         # TypeScript type definitions
 │   └── Dockerfile
-├── docker-compose.yml      # Multi-service orchestration
-└── README.md              # This file
+├── mongo-init/             # MongoDB initialization scripts
+├── docker-compose.dev.yml  # Development environment
+├── docker-compose.prod.yml # Production environment (secure)
+├── MONGODB_SECURITY.md     # Security configuration guide
+└── README.md               # This file
 ```
 
 ## 🔧 Development
@@ -223,6 +237,8 @@ For more detailed information about each component:
 
 - [Backend README](backend/README.md) - API documentation, endpoints, and backend setup
 - [Frontend README](frontend/README.md) - Component structure, routing, and frontend setup
+- [MongoDB Security Guide](MONGODB_SECURITY.md) - Production security configuration
+- [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
 
 ## 🤝 Contributing
 
